@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Monopoly 3D Hotseat</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="layout">
+      <section class="panel">
+        <h1>Monopoly 3D</h1>
+        <p>Versión rápida para jugar con amigos en el mismo ordenador.</p>
+
+        <div class="setup" id="setup">
+          <label for="playerCount">Jugadores</label>
+          <select id="playerCount">
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4" selected>4</option>
+          </select>
+          <button id="startBtn">Iniciar partida</button>
+        </div>
+
+        <div class="controls hidden" id="controls">
+          <p id="turnText"></p>
+          <button id="rollBtn">Lanzar dados</button>
+          <button id="buyBtn" disabled>Comprar propiedad</button>
+          <button id="endBtn" disabled>Terminar turno</button>
+        </div>
+
+        <div class="dice" id="diceText">Dados: -</div>
+        <div class="log" id="log"></div>
+      </section>
+
+      <section class="board-wrap">
+        <canvas id="boardCanvas"></canvas>
+      </section>
+    </main>
+
+    <script type="module" src="game.js"></script>
+  </body>
+</html>
