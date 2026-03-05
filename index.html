@@ -313,6 +313,9 @@
         .event-card-header.gradient-pink {
             background: linear-gradient(135deg, #fce7f3 0%, #ede9fe 50%, #fce7f3 100%);
         }
+        .event-card-header.gradient-closed {
+            background: linear-gradient(135deg, #e5e7eb 0%, #f3f4f6 50%, #e5e7eb 100%);
+        }
         .event-status-badge {
             display: inline-block;
             padding: 4px 12px;
@@ -326,6 +329,7 @@
         .event-status-badge.completed { color: #16a34a; border: 1px solid #bbf7d0; }
         .event-status-badge.upcoming { color: #5B5FC7; border: 1px solid #c7d2fe; }
         .event-status-badge.planned { color: #d97706; border: 1px solid #fde68a; }
+        .event-status-badge.closed { color: #6b7280; border: 1px solid #d1d5db; background: #f3f4f6; }
 
         .event-card-body {
             padding: 18px 20px;
@@ -403,6 +407,7 @@
         .badge-danger { background: #fee2e2; color: #dc2626; }
         .badge-warning { background: #fef3c7; color: #d97706; }
         .badge-info { background: #eeedff; color: #5B5FC7; }
+        .badge-closed { background: #f3f4f6; color: #6b7280; }
 
         /* ---- PROGRESS BAR ---- */
         .progress-bar-container {
@@ -768,12 +773,15 @@
             </div>
 
             <div id="attendance-panel" style="display:none;">
+                <div id="closed-banner" style="display:none;background:#f3f4f6;border:1px solid #d1d5db;border-radius:10px;padding:14px 20px;margin-bottom:18px;color:#6b7280;font-weight:600;text-align:center;">
+                    &#128274; Este evento esta cerrado. No se pueden realizar cambios.
+                </div>
                 <div class="section-header">
                     <div>
                         <h2>Personas Inscritas</h2>
                         <p class="section-subtitle">Gestiona los registros y productos del evento.</p>
                     </div>
-                    <button class="btn btn-primary" onclick="document.getElementById('modal-inscribir').classList.add('active')">+ Inscribir Persona</button>
+                    <button class="btn btn-primary" id="btn-open-inscribir" onclick="document.getElementById('modal-inscribir').classList.add('active')">+ Inscribir Persona</button>
                 </div>
 
                 <div class="card" style="padding:0;" id="attendees-list-card">
@@ -1022,7 +1030,9 @@ function refreshEvents() {
 
         const today = new Date().toISOString().split('T')[0];
         let status, statusClass;
-        if (pct === 100 && total > 0) {
+        if (ev.closed) {
+            status = 'Cerrado'; statusClass = 'closed';
+        } else if (pct === 100 && total > 0) {
             status = 'Completado'; statusClass = 'completed';
         } else if (ev.date <= today && total > 0) {
             status = 'En curso'; statusClass = 'upcoming';
@@ -1030,11 +1040,16 @@ function refreshEvents() {
             status = 'Proximo'; statusClass = 'planned';
         }
 
-        const grad = gradients[i % gradients.length];
+        const grad = ev.closed ? 'gradient-closed' : gradients[i % gradients.length];
         const pColor = progressColors[i % progressColors.length];
+
+        const closeBtn = ev.closed
+            ? '<span style="font-size:0.8rem;color:#6b7280;font-weight:600;">&#128274; Evento cerrado</span>'
+            : `<button class="btn btn-sm btn-outline" style="border-color:#dc3545;color:#dc3545;" onclick="event.stopPropagation();closeEvent('${ev.id}')">&#128274; Cerrar Evento</button>`;
 
         const card = document.createElement('div');
         card.className = 'event-card';
+        if (ev.closed) card.style.opacity = '0.75';
         card.innerHTML = `
             <div class="event-card-header ${grad}">
                 <span class="event-status-badge ${statusClass}">${status}</span>
@@ -1052,7 +1067,10 @@ function refreshEvents() {
                     </div>
                 </div>
                 <div class="event-card-footer">
-                    <button class="btn btn-ghost btn-sm" onclick="goToEventAttendance('${ev.id}')">Gestionar</button>
+                    <div style="display:flex;gap:6px;align-items:center;">
+                        ${!ev.closed ? `<button class="btn btn-ghost btn-sm" onclick="goToEventAttendance('${ev.id}')">Gestionar</button>` : ''}
+                        ${closeBtn}
+                    </div>
                     <span class="attendee-count">${total} inscritos</span>
                 </div>
             </div>`;
@@ -1070,6 +1088,25 @@ function goToEventAttendance(eventId) {
     document.getElementById('page-title').textContent = pageTitles['attendance'];
     document.getElementById('select-event-attendance').value = eventId;
     refreshAttendance();
+}
+
+function closeEvent(id) {
+    if (!confirm('Cerrar este evento? Ya no se podran hacer cambios de asistencia ni inscripciones.')) return;
+    const event = appData.events.find(e => e.id === id);
+    if (event) {
+        event.closed = true;
+        saveData(appData);
+        refreshEvents();
+    }
+}
+
+function reopenEvent(id) {
+    const event = appData.events.find(e => e.id === id);
+    if (event) {
+        event.closed = false;
+        saveData(appData);
+        refreshEvents();
+    }
 }
 
 function deleteEvent(id) {
@@ -1112,15 +1149,25 @@ function refreshAttendance() {
     panel.style.display = 'block';
     confCard.style.display = 'flex';
 
+    const isClosed = event.closed === true;
+
     // Confirmation stats
     const total = event.attendees.length;
     const attended = event.attendees.filter(a => a.attended).length;
     const pct = total > 0 ? Math.round((attended / total) * 100) : 0;
 
-    document.getElementById('conf-text').textContent = `${attended} de ${total} confirmados`;
+    document.getElementById('conf-text').textContent = isClosed
+        ? `${attended} de ${total} confirmados — EVENTO CERRADO`
+        : `${attended} de ${total} confirmados`;
     document.getElementById('conf-pct').textContent = pct + '%';
+    if (isClosed) document.getElementById('conf-pct').style.color = '#6b7280';
+    else document.getElementById('conf-pct').style.color = '#5B5FC7';
     const bar = document.getElementById('attendance-progress');
     bar.style.width = pct + '%';
+
+    // Closed state UI
+    document.getElementById('closed-banner').style.display = isClosed ? 'block' : 'none';
+    document.getElementById('btn-open-inscribir').style.display = isClosed ? 'none' : '';
 
     // Table
     const tbody = document.getElementById('attendees-table-body');
@@ -1161,10 +1208,12 @@ function refreshAttendance() {
             <td>${attendanceBadge}</td>
             <td><div class="product-tags">${productTags}</div></td>
             <td class="actions">
+                ${isClosed ? '<span style="color:#aaa;font-size:0.82rem;">—</span>' : `
                 ${att.attended !== true ? `<button class="btn btn-sm btn-success" onclick="markAttendance('${event.id}',${idx},true)">&#10003;</button>` : ''}
                 ${att.attended !== false ? `<button class="btn btn-sm btn-danger" onclick="markAttendance('${event.id}',${idx},false)">&#10007;</button>` : ''}
                 <button class="btn btn-sm btn-ghost" onclick="openProductsModal('${event.id}',${idx})">Asignar Producto</button>
                 <button class="btn btn-sm btn-secondary" onclick="removeAttendee('${event.id}',${idx})">&#128465;</button>
+                `}
             </td>`;
         tbody.appendChild(tr);
     });
@@ -1361,7 +1410,9 @@ function refreshStats() {
 
         const today = new Date().toISOString().split('T')[0];
         let statusBadge;
-        if (pct === 100 && total > 0) {
+        if (ev.closed) {
+            statusBadge = '<span class="badge badge-closed">Cerrado</span>';
+        } else if (pct === 100 && total > 0) {
             statusBadge = '<span class="badge badge-success">Completado</span>';
         } else if (ev.date <= today && total > 0) {
             statusBadge = '<span class="badge badge-info">En curso</span>';
