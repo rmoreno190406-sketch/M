@@ -3,479 +3,937 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Eventos - Análisis Capilar</title>
+    <title>DS Hair Expert - Gestión de Eventos</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f0f2f5;
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f4f5fa;
+            color: #333;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ---- SIDEBAR ---- */
+        .sidebar {
+            width: 240px;
+            background: white;
+            border-right: 1px solid #e8e8ef;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 50;
+            transition: transform 0.3s;
+        }
+        .sidebar-brand {
+            padding: 24px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .sidebar-brand .brand-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #5B5FC7, #7c6dd8);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.1rem;
+        }
+        .sidebar-brand .brand-text h2 {
+            font-size: 0.95rem;
+            font-weight: 700;
             color: #333;
         }
-        header {
-            background: linear-gradient(135deg, #6a3093, #a044ff);
+        .sidebar-brand .brand-text span {
+            font-size: 0.75rem;
+            color: #999;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 8px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #666;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            transition: all 0.2s;
+        }
+        .nav-item:hover { background: #f0eeff; color: #5B5FC7; }
+        .nav-item.active {
+            background: #5B5FC7;
             color: white;
-            padding: 20px 30px;
+        }
+        .nav-item .nav-icon {
+            width: 20px;
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        /* ---- MAIN CONTENT ---- */
+        .main-content {
+            flex: 1;
+            margin-left: 240px;
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            background: white;
+            padding: 18px 32px;
+            border-bottom: 1px solid #e8e8ef;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
-        header h1 { font-size: 1.5rem; }
-        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+        .top-bar h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #333;
+        }
 
-        /* Tabs */
-        .tabs {
+        .page-content {
+            padding: 28px 32px;
+            max-width: 1100px;
+        }
+
+        /* ---- SECTION ---- */
+        .section-content { display: none; }
+        .section-content.active { display: block; }
+
+        .section-header {
             display: flex;
-            gap: 4px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .section-header h2 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #222;
+        }
+        .section-subtitle {
+            font-size: 0.85rem;
+            color: #999;
             margin-bottom: 20px;
-            background: white;
-            border-radius: 10px;
-            padding: 6px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
         }
-        .tab-btn {
-            flex: 1;
-            padding: 12px 16px;
-            border: none;
-            background: transparent;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.95rem;
-            font-weight: 500;
-            color: #666;
-            transition: all 0.2s;
-        }
-        .tab-btn.active {
-            background: #6a3093;
-            color: white;
-        }
-        .tab-btn:hover:not(.active) { background: #f0e6ff; color: #6a3093; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
 
-        /* Cards */
+        /* ---- CARDS ---- */
         .card {
             background: white;
-            border-radius: 12px;
+            border-radius: 14px;
             padding: 24px;
-            margin-bottom: 20px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            margin-bottom: 24px;
+            border: 1px solid #e8e8ef;
         }
-        .card h2 {
-            font-size: 1.2rem;
-            margin-bottom: 16px;
-            color: #6a3093;
+        .card h3 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #222;
+            margin-bottom: 4px;
+        }
+        .card .card-subtitle {
+            font-size: 0.83rem;
+            color: #999;
+            margin-bottom: 18px;
         }
 
-        /* Forms */
+        /* ---- STATS GRID ---- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 14px;
+            padding: 20px 24px;
+            border: 1px solid #e8e8ef;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+        .stat-icon.purple { background: #eeedff; color: #5B5FC7; }
+        .stat-icon.green { background: #e6f9ee; color: #28a745; }
+        .stat-icon.blue { background: #e6f0ff; color: #3b82f6; }
+        .stat-icon.orange { background: #fff4e6; color: #f59e0b; }
+        .stat-info .stat-label {
+            font-size: 0.78rem;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        .stat-info .stat-value {
+            font-size: 1.7rem;
+            font-weight: 700;
+            color: #222;
+        }
+
+        /* ---- FORMS ---- */
         .form-row {
             display: flex;
-            gap: 12px;
-            margin-bottom: 12px;
+            gap: 16px;
+            align-items: flex-end;
             flex-wrap: wrap;
         }
-        .form-group { display: flex; flex-direction: column; flex: 1; min-width: 180px; }
-        .form-group label { font-size: 0.85rem; color: #666; margin-bottom: 4px; }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 180px;
+        }
+        .form-group label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 6px;
+        }
         input, select {
-            padding: 10px 14px;
+            padding: 11px 16px;
             border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 0.95rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
             outline: none;
             transition: border-color 0.2s;
+            font-family: inherit;
+            background: white;
         }
-        input:focus, select:focus { border-color: #a044ff; }
+        input:focus, select:focus {
+            border-color: #5B5FC7;
+            box-shadow: 0 0 0 3px rgba(91, 95, 199, 0.1);
+        }
 
+        /* ---- BUTTONS ---- */
         .btn {
-            padding: 10px 20px;
+            padding: 11px 24px;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             font-weight: 600;
             transition: all 0.2s;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
         }
-        .btn-primary { background: #6a3093; color: white; }
-        .btn-primary:hover { background: #7b3aab; }
+        .btn-primary {
+            background: #5B5FC7;
+            color: white;
+        }
+        .btn-primary:hover { background: #4a4eb3; }
         .btn-success { background: #28a745; color: white; }
         .btn-success:hover { background: #218838; }
         .btn-danger { background: #dc3545; color: white; }
         .btn-danger:hover { background: #c82333; }
         .btn-secondary { background: #6c757d; color: white; }
         .btn-secondary:hover { background: #5a6268; }
-        .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+        .btn-sm { padding: 7px 14px; font-size: 0.8rem; border-radius: 8px; }
         .btn-outline {
             background: transparent;
-            border: 1px solid #6a3093;
-            color: #6a3093;
+            border: 1px solid #5B5FC7;
+            color: #5B5FC7;
         }
-        .btn-outline:hover { background: #6a3093; color: white; }
+        .btn-outline:hover { background: #5B5FC7; color: white; }
+        .btn-ghost {
+            background: transparent;
+            color: #5B5FC7;
+            padding: 7px 12px;
+        }
+        .btn-ghost:hover { background: #f0eeff; }
 
-        /* Stats */
-        .stats-grid {
+        /* ---- EVENT CARDS GRID ---- */
+        .events-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
         }
-        .stat-card {
+        .event-card {
             background: white;
-            border-radius: 12px;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid #e8e8ef;
+            transition: box-shadow 0.2s;
         }
-        .stat-value {
-            font-size: 2rem;
+        .event-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+        .event-card-header {
+            height: 100px;
+            position: relative;
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-end;
+            padding: 12px;
+        }
+        .event-card-header.gradient-purple {
+            background: linear-gradient(135deg, #e8e6ff 0%, #f3e8ff 50%, #fce7f3 100%);
+        }
+        .event-card-header.gradient-green {
+            background: linear-gradient(135deg, #dcfce7 0%, #e0f2fe 50%, #f0fdf4 100%);
+        }
+        .event-card-header.gradient-orange {
+            background: linear-gradient(135deg, #fef3c7 0%, #ffedd5 50%, #fef9c3 100%);
+        }
+        .event-card-header.gradient-pink {
+            background: linear-gradient(135deg, #fce7f3 0%, #ede9fe 50%, #fce7f3 100%);
+        }
+        .event-status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 0.72rem;
             font-weight: 700;
-            color: #6a3093;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: white;
         }
-        .stat-label {
-            font-size: 0.85rem;
+        .event-status-badge.completed { color: #16a34a; border: 1px solid #bbf7d0; }
+        .event-status-badge.upcoming { color: #5B5FC7; border: 1px solid #c7d2fe; }
+        .event-status-badge.planned { color: #d97706; border: 1px solid #fde68a; }
+
+        .event-card-body {
+            padding: 18px 20px;
+        }
+        .event-card-body h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #222;
+            margin-bottom: 6px;
+        }
+        .event-card-date {
+            font-size: 0.82rem;
             color: #888;
-            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 14px;
         }
-        .stat-card .progress-ring {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 8px;
+        .event-card-progress {
+            margin-bottom: 12px;
+        }
+        .event-card-progress .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.78rem;
+            color: #888;
+            margin-bottom: 6px;
+        }
+        .event-card-progress .progress-label .pct {
+            font-weight: 700;
         }
 
-        /* Table */
+        .event-card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 12px;
+            border-top: 1px solid #f0f0f5;
+        }
+        .event-card-footer .attendee-count {
+            font-size: 0.82rem;
+            color: #888;
+        }
+
+        /* ---- TABLE ---- */
         .table-wrapper { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; }
         th {
             text-align: left;
-            padding: 12px 14px;
-            background: #f8f6fc;
-            color: #6a3093;
+            padding: 12px 16px;
+            font-size: 0.75rem;
+            color: #888;
             font-weight: 600;
-            font-size: 0.85rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            border-bottom: 1px solid #eee;
         }
         td {
-            padding: 12px 14px;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 0.95rem;
+            padding: 14px 16px;
+            border-bottom: 1px solid #f5f5f8;
+            font-size: 0.9rem;
+            vertical-align: middle;
         }
-        tr:hover td { background: #faf8ff; }
+        tr:hover td { background: #faf9ff; }
 
-        /* Badges */
+        /* ---- BADGES ---- */
         .badge {
             display: inline-block;
-            padding: 4px 10px;
+            padding: 4px 12px;
             border-radius: 20px;
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             font-weight: 600;
         }
-        .badge-success { background: #d4edda; color: #155724; }
-        .badge-danger { background: #f8d7da; color: #721c24; }
-        .badge-warning { background: #fff3cd; color: #856404; }
-        .badge-info { background: #e7e3ff; color: #6a3093; }
+        .badge-success { background: #dcfce7; color: #16a34a; }
+        .badge-danger { background: #fee2e2; color: #dc2626; }
+        .badge-warning { background: #fef3c7; color: #d97706; }
+        .badge-info { background: #eeedff; color: #5B5FC7; }
 
-        /* Progress bar */
+        /* ---- PROGRESS BAR ---- */
         .progress-bar-container {
             background: #e9ecef;
             border-radius: 10px;
-            height: 24px;
+            height: 8px;
             overflow: hidden;
-            position: relative;
+        }
+        .progress-bar-container.large {
+            height: 24px;
         }
         .progress-bar-fill {
             height: 100%;
-            background: linear-gradient(90deg, #6a3093, #a044ff);
             border-radius: 10px;
             transition: width 0.5s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: 600;
-            min-width: 40px;
+            min-width: 30px;
         }
+        .progress-bar-fill.purple { background: linear-gradient(90deg, #5B5FC7, #7c6dd8); }
+        .progress-bar-fill.green { background: linear-gradient(90deg, #22c55e, #4ade80); }
+        .progress-bar-fill.orange { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
 
-        /* Event selector */
-        .event-selector {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-        .event-selector select { min-width: 300px; }
-
-        /* Product tags */
+        /* ---- PRODUCT TAGS ---- */
         .product-tags { display: flex; flex-wrap: wrap; gap: 4px; }
         .product-tag {
             display: inline-block;
-            background: #e7e3ff;
-            color: #6a3093;
-            padding: 2px 8px;
+            background: #eeedff;
+            color: #5B5FC7;
+            padding: 3px 10px;
             border-radius: 12px;
-            font-size: 0.78rem;
+            font-size: 0.76rem;
+            font-weight: 500;
         }
 
-        /* Modal */
+        /* ---- AVATAR ---- */
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: white;
+            flex-shrink: 0;
+        }
+        .avatar.purple { background: #5B5FC7; }
+        .avatar.green { background: #22c55e; }
+        .avatar.orange { background: #f59e0b; }
+        .avatar.pink { background: #ec4899; }
+        .avatar.blue { background: #3b82f6; }
+
+        .attendee-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .attendee-cell .att-name {
+            font-weight: 600;
+            color: #222;
+        }
+        .attendee-cell .att-phone {
+            font-size: 0.8rem;
+            color: #999;
+        }
+
+        /* ---- EVENT SELECTOR ---- */
+        .event-selector-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            align-items: stretch;
+        }
+        .event-selector-card {
+            background: white;
+            border-radius: 14px;
+            padding: 20px 24px;
+            border: 1px solid #e8e8ef;
+            flex: 1;
+        }
+        .event-selector-card label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .event-selector-card select {
+            width: 100%;
+        }
+        .confirmation-card {
+            background: white;
+            border-radius: 14px;
+            padding: 20px 24px;
+            border: 1px solid #e8e8ef;
+            flex: 2;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .confirmation-card .conf-info { flex: 1; }
+        .confirmation-card .conf-info h4 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #222;
+            margin-bottom: 4px;
+        }
+        .confirmation-card .conf-info p {
+            font-size: 0.82rem;
+            color: #999;
+            margin-bottom: 10px;
+        }
+        .confirmation-card .conf-pct {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #5B5FC7;
+        }
+
+        /* ---- MODAL ---- */
         .modal-overlay {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.4);
             z-index: 100;
             align-items: center;
             justify-content: center;
+            backdrop-filter: blur(2px);
         }
         .modal-overlay.active { display: flex; }
         .modal {
             background: white;
-            border-radius: 14px;
+            border-radius: 16px;
             padding: 28px;
             max-width: 500px;
             width: 90%;
             max-height: 80vh;
             overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
         }
-        .modal h3 { margin-bottom: 16px; color: #6a3093; }
+        .modal h3 { margin-bottom: 18px; color: #222; font-size: 1.1rem; }
         .modal .form-group { margin-bottom: 12px; }
 
-        /* Actions column */
+        /* ---- ACTIONS ---- */
         .actions { display: flex; gap: 6px; flex-wrap: wrap; }
 
-        /* Empty state */
+        /* ---- EMPTY STATE ---- */
         .empty-state {
             text-align: center;
             padding: 40px;
-            color: #aaa;
+            color: #bbb;
         }
-        .empty-state p { font-size: 1rem; }
+        .empty-state p { font-size: 0.95rem; }
 
-        /* Responsive */
-        @media (max-width: 600px) {
-            header h1 { font-size: 1.1rem; }
-            .tabs { flex-direction: column; }
-            .event-selector select { min-width: 100%; }
+        /* ---- TOP PRODUCTS SIDEBAR (stats) ---- */
+        .stats-layout {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 24px;
+        }
+        .top-products-card {
+            background: white;
+            border-radius: 14px;
+            padding: 24px;
+            border: 1px solid #e8e8ef;
+            height: fit-content;
+        }
+        .top-products-card h3 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 18px;
+            color: #222;
+        }
+        .top-product-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f5f5f8;
+        }
+        .top-product-item:last-child { border-bottom: none; }
+        .top-product-item .tp-icon {
+            width: 40px;
+            height: 40px;
+            background: #eeedff;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #5B5FC7;
+            font-size: 1rem;
+        }
+        .top-product-item .tp-info { flex: 1; }
+        .top-product-item .tp-info .tp-name {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #222;
+        }
+        .top-product-item .tp-info .tp-bar {
+            height: 4px;
+            background: #eeedff;
+            border-radius: 4px;
+            margin-top: 6px;
+            overflow: hidden;
+        }
+        .top-product-item .tp-info .tp-bar-fill {
+            height: 100%;
+            background: #5B5FC7;
+            border-radius: 4px;
+        }
+        .top-product-item .tp-count {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #222;
+        }
+
+        /* ---- MOBILE SIDEBAR ---- */
+        .sidebar-toggle {
+            display: none;
+            background: white;
+            border: 1px solid #e8e8ef;
+            border-radius: 10px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        /* ---- RESPONSIVE ---- */
+        @media (max-width: 900px) {
+            .stats-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .sidebar-toggle {
+                display: block;
+            }
+            .page-content {
+                padding: 20px 16px;
+            }
+            .top-bar {
+                padding: 14px 16px;
+            }
             .form-row { flex-direction: column; }
+            .event-selector-row { flex-direction: column; }
+            .events-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
 
-<header>
-    <h1>Gestión de Eventos - Análisis Capilar</h1>
-</header>
-
-<div class="container">
-    <div class="tabs">
-        <button class="tab-btn active" data-tab="events">Eventos</button>
-        <button class="tab-btn" data-tab="attendance">Asistencia</button>
-        <button class="tab-btn" data-tab="stats">Estadísticas</button>
-        <button class="tab-btn" data-tab="products">Productos</button>
-        <button class="tab-btn" data-tab="phones">Teléfonos</button>
-    </div>
-
-    <!-- TAB: Eventos -->
-    <div class="tab-content active" id="tab-events">
-        <div class="card">
-            <h2>Crear Nuevo Evento</h2>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Nombre del evento</label>
-                    <input type="text" id="event-name" placeholder="Ej: Análisis Capilar Q1 2026">
-                </div>
-                <div class="form-group">
-                    <label>Fecha</label>
-                    <input type="date" id="event-date">
-                </div>
-            </div>
-            <button class="btn btn-primary" id="btn-create-event">Crear Evento</button>
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-icon">&#9986;</div>
+        <div class="brand-text">
+            <h2>DS Hair Expert</h2>
+            <span>Admin Panel</span>
         </div>
+    </div>
+    <nav class="sidebar-nav">
+        <button class="nav-item active" data-section="events">
+            <span class="nav-icon">&#128197;</span> Eventos
+        </button>
+        <button class="nav-item" data-section="attendance">
+            <span class="nav-icon">&#9989;</span> Asistencia
+        </button>
+        <button class="nav-item" data-section="stats">
+            <span class="nav-icon">&#128200;</span> Estadisticas
+        </button>
+        <button class="nav-item" data-section="products">
+            <span class="nav-icon">&#128230;</span> Productos
+        </button>
+        <button class="nav-item" data-section="phones">
+            <span class="nav-icon">&#128222;</span> Telefonos
+        </button>
+    </nav>
+</aside>
 
-        <div class="card">
-            <h2>Eventos Creados</h2>
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Evento</th>
-                            <th>Fecha</th>
-                            <th>Inscritos</th>
-                            <th>Asistencia</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="events-table-body"></tbody>
-                </table>
-            </div>
-            <div class="empty-state" id="no-events"><p>No hay eventos creados todavía.</p></div>
+<!-- MAIN -->
+<div class="main-content">
+    <div class="top-bar">
+        <div style="display:flex;align-items:center;gap:12px;">
+            <button class="sidebar-toggle" id="sidebar-toggle">&#9776;</button>
+            <h1 id="page-title">Panel de Gestion Capilar</h1>
         </div>
     </div>
 
-    <!-- TAB: Asistencia -->
-    <div class="tab-content" id="tab-attendance">
-        <div class="event-selector">
-            <label><strong>Evento:</strong></label>
-            <select id="select-event-attendance"><option value="">-- Selecciona un evento --</option></select>
-        </div>
+    <div class="page-content">
 
-        <div class="card" id="attendance-panel" style="display:none;">
-            <h2>Inscribir Persona</h2>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Nombre completo</label>
-                    <input type="text" id="attendee-name" placeholder="Nombre y apellidos">
+        <!-- SECTION: Eventos -->
+        <div class="section-content active" id="section-events">
+            <div class="card">
+                <h3>Crear Nuevo Evento</h3>
+                <p class="card-subtitle">Agrega los detalles para programar un nuevo encuentro.</p>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nombre del Evento</label>
+                        <input type="text" id="event-name" placeholder="Ej: Masterclass Colorimetria DS">
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha del Evento</label>
+                        <input type="date" id="event-date">
+                    </div>
+                    <div class="form-group" style="flex:0;min-width:auto;">
+                        <label>&nbsp;</label>
+                        <button class="btn btn-primary" id="btn-create-event">+ Crear Evento</button>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Teléfono</label>
-                    <input type="tel" id="attendee-phone" placeholder="Ej: 612 345 678">
+            </div>
+
+            <div class="section-header" style="margin-top:8px;">
+                <div>
+                    <h2>Eventos Creados</h2>
+                    <p class="section-subtitle">Resumen de los encuentros programados.</p>
                 </div>
             </div>
-            <button class="btn btn-primary" id="btn-add-attendee">Inscribir</button>
+
+            <div class="events-grid" id="events-grid"></div>
+            <div class="empty-state" id="no-events"><p>No hay eventos creados todavia.</p></div>
         </div>
 
-        <div class="card" id="attendance-stats-card" style="display:none;">
-            <h2>Resumen de Asistencia</h2>
-            <div class="stats-grid" id="attendance-stats"></div>
-            <div class="progress-bar-container">
-                <div class="progress-bar-fill" id="attendance-progress">0%</div>
+        <!-- SECTION: Asistencia -->
+        <div class="section-content" id="section-attendance">
+            <div class="event-selector-row">
+                <div class="event-selector-card">
+                    <label>Seleccionar Evento</label>
+                    <select id="select-event-attendance">
+                        <option value="">-- Selecciona un evento --</option>
+                    </select>
+                </div>
+                <div class="confirmation-card" id="confirmation-card" style="display:none;">
+                    <div class="conf-info">
+                        <h4>Confirmacion de Asistentes</h4>
+                        <p id="conf-text">0 de 0 confirmados</p>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill purple" id="attendance-progress" style="width:0%"></div>
+                        </div>
+                        <div style="display:flex;gap:16px;margin-top:8px;">
+                            <span style="font-size:0.75rem;color:#5B5FC7;">&#9679; Confirmados</span>
+                            <span style="font-size:0.75rem;color:#ccc;">&#9679; Pendientes</span>
+                        </div>
+                    </div>
+                    <div class="conf-pct" id="conf-pct">0%</div>
+                </div>
+            </div>
+
+            <div id="attendance-panel" style="display:none;">
+                <div class="section-header">
+                    <div>
+                        <h2>Personas Inscritas</h2>
+                        <p class="section-subtitle">Gestiona los registros y productos del evento.</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="document.getElementById('modal-inscribir').classList.add('active')">+ Inscribir Persona</button>
+                </div>
+
+                <div class="card" style="padding:0;" id="attendees-list-card">
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nombre / Telefono</th>
+                                    <th>Asistencia</th>
+                                    <th>Productos Adquiridos</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendees-table-body"></tbody>
+                        </table>
+                    </div>
+                    <div class="empty-state" id="no-attendees"><p>No hay personas inscritas en este evento.</p></div>
+                </div>
             </div>
         </div>
 
-        <div class="card" id="attendees-list-card" style="display:none;">
-            <h2>Lista de Asistentes</h2>
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Nombre</th>
-                            <th>Teléfono</th>
-                            <th>Asistencia</th>
-                            <th>Compra</th>
-                            <th>Productos</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="attendees-table-body"></tbody>
-                </table>
+        <!-- SECTION: Estadisticas -->
+        <div class="section-content" id="section-stats">
+            <div class="stats-grid" id="global-stats"></div>
+
+            <div class="stats-layout">
+                <div>
+                    <div class="card" style="padding:0;">
+                        <div style="padding:24px 24px 0;">
+                            <h3>Comparativa por Evento</h3>
+                        </div>
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Nombre Evento</th>
+                                        <th>Inscritos</th>
+                                        <th>% Asistencia</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="stats-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="top-products-card">
+                        <h3>Top Productos Vendidos</h3>
+                        <div id="top-products-list"></div>
+                        <div class="empty-state" id="no-products-stats" style="padding:20px;"><p>Sin datos todavia.</p></div>
+                    </div>
+                </div>
             </div>
-            <div class="empty-state" id="no-attendees"><p>No hay personas inscritas en este evento.</p></div>
         </div>
+
+        <!-- SECTION: Productos -->
+        <div class="section-content" id="section-products">
+            <div class="card">
+                <h3>Agregar Nuevo Producto</h3>
+                <p class="card-subtitle">Completa los datos para registrar un nuevo articulo en tu catalogo.</p>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nombre del Producto</label>
+                        <input type="text" id="product-name" placeholder="Ej: Shampoo Revitalizante DS">
+                    </div>
+                    <div class="form-group">
+                        <label>Precio (Opcional)</label>
+                        <input type="number" id="product-price" placeholder="0.00" step="0.01" min="0">
+                    </div>
+                    <div class="form-group" style="flex:0;min-width:auto;">
+                        <label>&nbsp;</label>
+                        <button class="btn btn-primary" id="btn-add-product">+ Agregar al Catalogo</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-header">
+                <div>
+                    <h2>Inventario de Productos</h2>
+                    <p class="section-subtitle">Listado de todos los recursos disponibles para tus eventos.</p>
+                </div>
+            </div>
+
+            <div class="card" style="padding:0;">
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Precio</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="products-table-body"></tbody>
+                    </table>
+                </div>
+                <div class="empty-state" id="no-products"><p>No hay productos en el catalogo.</p></div>
+            </div>
+        </div>
+
+        <!-- SECTION: Telefonos -->
+        <div class="section-content" id="section-phones">
+            <div class="card">
+                <h3>Directorio de Contactos</h3>
+                <p class="card-subtitle">Todos los contactos registrados en los eventos con su numero de telefono.</p>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Buscar por nombre</label>
+                        <input type="text" id="phone-search" placeholder="Escribe para filtrar...">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="padding:0;">
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Telefono</th>
+                                <th>Eventos</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="phones-table-body"></tbody>
+                    </table>
+                </div>
+                <div class="empty-state" id="no-phones"><p>No hay contactos con telefono registrado.</p></div>
+            </div>
+        </div>
+
     </div>
+</div>
 
-    <!-- TAB: Estadísticas -->
-    <div class="tab-content" id="tab-stats">
-        <div class="stats-grid" id="global-stats"></div>
-
-        <div class="card">
-            <h2>Resumen por Evento</h2>
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Evento</th>
-                            <th>Fecha</th>
-                            <th>Inscritos</th>
-                            <th>Asistieron</th>
-                            <th>% Asistencia</th>
-                            <th>Compraron</th>
-                        </tr>
-                    </thead>
-                    <tbody id="stats-table-body"></tbody>
-                </table>
-            </div>
+<!-- Modal: Inscribir persona -->
+<div class="modal-overlay" id="modal-inscribir">
+    <div class="modal">
+        <h3>Inscribir Persona</h3>
+        <div class="form-group">
+            <label>Nombre completo</label>
+            <input type="text" id="attendee-name" placeholder="Nombre y apellidos" style="width:100%;">
         </div>
-
-        <div class="card">
-            <h2>Productos Más Vendidos (Global)</h2>
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Producto</th>
-                            <th>Veces Vendido</th>
-                        </tr>
-                    </thead>
-                    <tbody id="top-products-body"></tbody>
-                </table>
-            </div>
-            <div class="empty-state" id="no-products-stats"><p>No hay datos de productos todavía.</p></div>
+        <div class="form-group" style="margin-top:12px;">
+            <label>Telefono</label>
+            <input type="tel" id="attendee-phone" placeholder="Ej: 612 345 678" style="width:100%;">
         </div>
-    </div>
-
-    <!-- TAB: Productos -->
-    <div class="tab-content" id="tab-products">
-        <div class="card">
-            <h2>Gestión de Productos</h2>
-            <p style="color:#888; margin-bottom:16px;">Añade aquí los productos disponibles para asociar a las compras de los asistentes.</p>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Nombre del producto</label>
-                    <input type="text" id="product-name" placeholder="Ej: Champú Reparador">
-                </div>
-                <div class="form-group">
-                    <label>Precio (opcional)</label>
-                    <input type="number" id="product-price" placeholder="0.00" step="0.01" min="0">
-                </div>
-            </div>
-            <button class="btn btn-primary" id="btn-add-product">Añadir Producto</button>
-        </div>
-        <div class="card">
-            <h2>Catálogo de Productos</h2>
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Producto</th>
-                            <th>Precio</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="products-table-body"></tbody>
-                </table>
-            </div>
-            <div class="empty-state" id="no-products"><p>No hay productos en el catálogo.</p></div>
-        </div>
-    </div>
-
-    <!-- TAB: Teléfonos -->
-    <div class="tab-content" id="tab-phones">
-        <div class="card">
-            <h2>Directorio de Contactos</h2>
-            <p style="color:#888; margin-bottom:16px;">Todos los contactos registrados en los eventos con su número de teléfono.</p>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Buscar por nombre</label>
-                    <input type="text" id="phone-search" placeholder="Escribe para filtrar...">
-                </div>
-            </div>
-        </div>
-        <div class="card">
-            <h2>Lista de Teléfonos</h2>
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Nombre</th>
-                            <th>Teléfono</th>
-                            <th>Eventos</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="phones-table-body"></tbody>
-                </table>
-            </div>
-            <div class="empty-state" id="no-phones"><p>No hay contactos con teléfono registrado.</p></div>
+        <div style="margin-top:18px; display:flex; gap:8px; justify-content:flex-end;">
+            <button class="btn btn-secondary" onclick="document.getElementById('modal-inscribir').classList.remove('active')">Cancelar</button>
+            <button class="btn btn-primary" id="btn-add-attendee">+ Inscribir</button>
         </div>
     </div>
 </div>
 
-<!-- Modal: Añadir productos a asistente -->
+<!-- Modal: Productos del asistente -->
 <div class="modal-overlay" id="modal-products">
     <div class="modal">
         <h3>Productos comprados por <span id="modal-attendee-name"></span></h3>
         <div id="modal-products-list"></div>
-        <div style="margin-top:16px; display:flex; gap:8px; justify-content:flex-end;">
+        <div style="margin-top:18px; display:flex; gap:8px; justify-content:flex-end;">
             <button class="btn btn-secondary" id="btn-modal-close">Cerrar</button>
             <button class="btn btn-primary" id="btn-modal-save">Guardar</button>
         </div>
@@ -495,17 +953,36 @@ function saveData(data) {
 
 let appData = loadData();
 
-// ---- TABS ----
-document.querySelectorAll('.tab-btn').forEach(btn => {
+// ---- SIDEBAR NAV ----
+const pageTitles = {
+    events: 'Panel de Gestion Capilar',
+    attendance: 'Asistencia de Eventos',
+    stats: 'Estadisticas Globales',
+    products: 'Catalogo de Productos',
+    phones: 'Directorio de Telefonos'
+};
+
+document.querySelectorAll('.nav-item').forEach(btn => {
     btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.section-content').forEach(c => c.classList.remove('active'));
         btn.classList.add('active');
-        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
-        if (btn.dataset.tab === 'attendance') refreshAttendance();
-        if (btn.dataset.tab === 'stats') refreshStats();
-        if (btn.dataset.tab === 'phones') refreshPhones();
+        const section = btn.dataset.section;
+        document.getElementById('section-' + section).classList.add('active');
+        document.getElementById('page-title').textContent = pageTitles[section] || '';
+
+        if (section === 'attendance') refreshAttendance();
+        if (section === 'stats') refreshStats();
+        if (section === 'phones') refreshPhones();
+
+        // Close mobile sidebar
+        document.getElementById('sidebar').classList.remove('open');
     });
+});
+
+// Mobile toggle
+document.getElementById('sidebar-toggle').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('open');
 });
 
 // ---- EVENTS ----
@@ -522,10 +999,14 @@ document.getElementById('btn-create-event').addEventListener('click', () => {
     refreshEvents();
 });
 
+const gradients = ['gradient-purple', 'gradient-green', 'gradient-orange', 'gradient-pink'];
+const avatarColors = ['purple', 'green', 'orange', 'pink', 'blue'];
+const progressColors = ['purple', 'green', 'orange'];
+
 function refreshEvents() {
-    const tbody = document.getElementById('events-table-body');
+    const grid = document.getElementById('events-grid');
     const noEvents = document.getElementById('no-events');
-    tbody.innerHTML = '';
+    grid.innerHTML = '';
 
     if (appData.events.length === 0) {
         noEvents.style.display = 'block';
@@ -534,30 +1015,65 @@ function refreshEvents() {
     noEvents.style.display = 'none';
 
     appData.events.sort((a, b) => b.date.localeCompare(a.date));
-    appData.events.forEach(ev => {
+    appData.events.forEach((ev, i) => {
         const total = ev.attendees.length;
         const attended = ev.attendees.filter(a => a.attended).length;
         const pct = total > 0 ? Math.round((attended / total) * 100) : 0;
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td><strong>${esc(ev.name)}</strong></td>
-            <td>${formatDate(ev.date)}</td>
-            <td>${total}</td>
-            <td>
-                <div class="progress-bar-container" style="height:18px;width:120px;display:inline-block;vertical-align:middle;">
-                    <div class="progress-bar-fill" style="width:${pct}%">${pct}%</div>
+
+        const today = new Date().toISOString().split('T')[0];
+        let status, statusClass;
+        if (pct === 100 && total > 0) {
+            status = 'Completado'; statusClass = 'completed';
+        } else if (ev.date <= today && total > 0) {
+            status = 'En curso'; statusClass = 'upcoming';
+        } else {
+            status = 'Proximo'; statusClass = 'planned';
+        }
+
+        const grad = gradients[i % gradients.length];
+        const pColor = progressColors[i % progressColors.length];
+
+        const card = document.createElement('div');
+        card.className = 'event-card';
+        card.innerHTML = `
+            <div class="event-card-header ${grad}">
+                <span class="event-status-badge ${statusClass}">${status}</span>
+            </div>
+            <div class="event-card-body">
+                <h4>${esc(ev.name)}</h4>
+                <div class="event-card-date">&#128197; ${formatDateLong(ev.date)}</div>
+                <div class="event-card-progress">
+                    <div class="progress-label">
+                        <span>Asistencia</span>
+                        <span class="pct">${pct}%</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill ${pColor}" style="width:${pct}%"></div>
+                    </div>
                 </div>
-            </td>
-            <td class="actions">
-                <button class="btn btn-sm btn-danger" onclick="deleteEvent('${ev.id}')">Eliminar</button>
-            </td>`;
-        tbody.appendChild(tr);
+                <div class="event-card-footer">
+                    <button class="btn btn-ghost btn-sm" onclick="goToEventAttendance('${ev.id}')">Gestionar</button>
+                    <span class="attendee-count">${total} inscritos</span>
+                </div>
+            </div>`;
+        grid.appendChild(card);
     });
     refreshEventSelectors();
 }
 
+function goToEventAttendance(eventId) {
+    // Navigate to attendance section with this event selected
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.section-content').forEach(c => c.classList.remove('active'));
+    document.querySelector('[data-section="attendance"]').classList.add('active');
+    document.getElementById('section-attendance').classList.add('active');
+    document.getElementById('page-title').textContent = pageTitles['attendance'];
+    document.getElementById('select-event-attendance').value = eventId;
+    refreshAttendance();
+}
+
 function deleteEvent(id) {
-    if (!confirm('¿Seguro que quieres eliminar este evento y todos sus datos?')) return;
+    if (!confirm('Seguro que quieres eliminar este evento y todos sus datos?')) return;
     appData.events = appData.events.filter(e => e.id !== id);
     saveData(appData);
     refreshEvents();
@@ -585,39 +1101,26 @@ function getSelectedEvent() {
 function refreshAttendance() {
     const event = getSelectedEvent();
     const panel = document.getElementById('attendance-panel');
-    const statsCard = document.getElementById('attendance-stats-card');
-    const listCard = document.getElementById('attendees-list-card');
+    const confCard = document.getElementById('confirmation-card');
 
     if (!event) {
         panel.style.display = 'none';
-        statsCard.style.display = 'none';
-        listCard.style.display = 'none';
+        confCard.style.display = 'none';
         return;
     }
 
     panel.style.display = 'block';
-    statsCard.style.display = 'block';
-    listCard.style.display = 'block';
+    confCard.style.display = 'flex';
 
-    // Stats
+    // Confirmation stats
     const total = event.attendees.length;
     const attended = event.attendees.filter(a => a.attended).length;
-    const notAttended = event.attendees.filter(a => a.attended === false).length;
-    const pending = event.attendees.filter(a => a.attended === null).length;
     const pct = total > 0 ? Math.round((attended / total) * 100) : 0;
-    const bought = event.attendees.filter(a => a.purchased).length;
-    const pctBought = attended > 0 ? Math.round((bought / attended) * 100) : 0;
 
-    document.getElementById('attendance-stats').innerHTML = `
-        <div class="stat-card"><div class="stat-value">${total}</div><div class="stat-label">Inscritos</div></div>
-        <div class="stat-card"><div class="stat-value">${attended}</div><div class="stat-label">Asistieron</div></div>
-        <div class="stat-card"><div class="stat-value">${notAttended}</div><div class="stat-label">No asistieron</div></div>
-        <div class="stat-card"><div class="stat-value">${pct}%</div><div class="stat-label">% Asistencia</div></div>
-    `;
-
+    document.getElementById('conf-text').textContent = `${attended} de ${total} confirmados`;
+    document.getElementById('conf-pct').textContent = pct + '%';
     const bar = document.getElementById('attendance-progress');
     bar.style.width = pct + '%';
-    bar.textContent = pct + '%';
 
     // Table
     const tbody = document.getElementById('attendees-table-body');
@@ -631,30 +1134,37 @@ function refreshAttendance() {
     noAtt.style.display = 'none';
 
     event.attendees.forEach((att, idx) => {
+        const initials = att.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+        const aColor = avatarColors[idx % avatarColors.length];
+
         const attendanceBadge = att.attended === null
             ? '<span class="badge badge-warning">Pendiente</span>'
             : att.attended
-                ? '<span class="badge badge-success">Asistió</span>'
-                : '<span class="badge badge-danger">No asistió</span>';
+                ? '<span class="badge badge-success">Asistio</span>'
+                : '<span class="badge badge-danger">No asistio</span>';
 
-        const purchaseBadge = att.purchased
-            ? '<span class="badge badge-success">Sí</span>'
-            : '<span class="badge badge-danger">No</span>';
-
-        const productTags = (att.products || []).map(p => `<span class="product-tag">${esc(p)}</span>`).join('');
+        const productTags = (att.products || []).length > 0
+            ? (att.products || []).map(p => `<span class="product-tag">${esc(p)}</span>`).join('')
+            : '<span style="color:#ccc;font-style:italic;font-size:0.85rem;">Sin productos</span>';
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><strong>${esc(att.name)}</strong></td>
-            <td>${att.phone ? esc(att.phone) : '<span style="color:#bbb">—</span>'}</td>
+            <td>
+                <div class="attendee-cell">
+                    <div class="avatar ${aColor}">${initials}</div>
+                    <div>
+                        <div class="att-name">${esc(att.name)}</div>
+                        <div class="att-phone">${att.phone ? esc(att.phone) : ''}</div>
+                    </div>
+                </div>
+            </td>
             <td>${attendanceBadge}</td>
-            <td>${purchaseBadge}</td>
-            <td><div class="product-tags">${productTags || '<span style="color:#bbb">—</span>'}</div></td>
+            <td><div class="product-tags">${productTags}</div></td>
             <td class="actions">
-                ${att.attended !== true ? `<button class="btn btn-sm btn-success" onclick="markAttendance('${event.id}',${idx},true)">Asistió</button>` : ''}
-                ${att.attended !== false ? `<button class="btn btn-sm btn-danger" onclick="markAttendance('${event.id}',${idx},false)">No asistió</button>` : ''}
-                <button class="btn btn-sm btn-outline" onclick="openProductsModal('${event.id}',${idx})">Productos</button>
-                <button class="btn btn-sm btn-secondary" onclick="removeAttendee('${event.id}',${idx})">Quitar</button>
+                ${att.attended !== true ? `<button class="btn btn-sm btn-success" onclick="markAttendance('${event.id}',${idx},true)">&#10003;</button>` : ''}
+                ${att.attended !== false ? `<button class="btn btn-sm btn-danger" onclick="markAttendance('${event.id}',${idx},false)">&#10007;</button>` : ''}
+                <button class="btn btn-sm btn-ghost" onclick="openProductsModal('${event.id}',${idx})">Asignar Producto</button>
+                <button class="btn btn-sm btn-secondary" onclick="removeAttendee('${event.id}',${idx})">&#128465;</button>
             </td>`;
         tbody.appendChild(tr);
     });
@@ -671,6 +1181,7 @@ document.getElementById('btn-add-attendee').addEventListener('click', () => {
     saveData(appData);
     document.getElementById('attendee-name').value = '';
     document.getElementById('attendee-phone').value = '';
+    document.getElementById('modal-inscribir').classList.remove('active');
     refreshAttendance();
     refreshEvents();
 });
@@ -686,7 +1197,7 @@ function markAttendance(eventId, idx, value) {
 }
 
 function removeAttendee(eventId, idx) {
-    if (!confirm('¿Quitar a esta persona del evento?')) return;
+    if (!confirm('Quitar a esta persona del evento?')) return;
     const event = appData.events.find(e => e.id === eventId);
     if (event) {
         event.attendees.splice(idx, 1);
@@ -711,14 +1222,14 @@ function openProductsModal(eventId, idx) {
 
     const list = document.getElementById('modal-products-list');
     if (appData.products.length === 0) {
-        list.innerHTML = '<p style="color:#999;">No hay productos en el catálogo. Añade productos en la pestaña "Productos".</p>';
+        list.innerHTML = '<p style="color:#999;">No hay productos en el catalogo. Agrega productos en la seccion "Productos".</p>';
     } else {
         list.innerHTML = appData.products.map(p => {
             const checked = (att.products || []).includes(p.name) ? 'checked' : '';
-            const priceStr = p.price ? ` (${Number(p.price).toFixed(2)} €)` : '';
-            return `<label style="display:block;padding:8px 0;border-bottom:1px solid #f0f0f0;cursor:pointer;">
-                <input type="checkbox" value="${esc(p.name)}" ${checked} style="margin-right:8px;">
-                ${esc(p.name)}${priceStr}
+            const priceStr = p.price ? ` (${Number(p.price).toFixed(2)} EUR)` : '';
+            return `<label style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #f0f0f5;cursor:pointer;">
+                <input type="checkbox" value="${esc(p.name)}" ${checked} style="width:18px;height:18px;accent-color:#5B5FC7;">
+                <span>${esc(p.name)}${priceStr}</span>
             </label>`;
         }).join('');
     }
@@ -774,17 +1285,22 @@ function refreshProducts() {
     appData.products.forEach((p, idx) => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><strong>${esc(p.name)}</strong></td>
-            <td>${p.price ? Number(p.price).toFixed(2) + ' €' : '—'}</td>
+            <td>
+                <div class="attendee-cell">
+                    <div class="stat-icon purple" style="width:36px;height:36px;border-radius:8px;font-size:0.9rem;">&#128230;</div>
+                    <strong>${esc(p.name)}</strong>
+                </div>
+            </td>
+            <td><strong>${p.price ? Number(p.price).toFixed(2) + ' EUR' : '—'}</strong></td>
             <td class="actions">
-                <button class="btn btn-sm btn-danger" onclick="deleteProduct(${idx})">Eliminar</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteProduct(${idx})">&#128465;</button>
             </td>`;
         tbody.appendChild(tr);
     });
 }
 
 function deleteProduct(idx) {
-    if (!confirm('¿Eliminar este producto del catálogo?')) return;
+    if (!confirm('Eliminar este producto del catalogo?')) return;
     appData.products.splice(idx, 1);
     saveData(appData);
     refreshProducts();
@@ -801,14 +1317,38 @@ function refreshStats() {
         totalCompraron += ev.attendees.filter(a => a.purchased).length;
     });
 
-    const pctGlobal = totalInscritos > 0 ? Math.round((totalAsistieron / totalInscritos) * 100) : 0;
-    const pctCompra = totalAsistieron > 0 ? Math.round((totalCompraron / totalAsistieron) * 100) : 0;
+    const pctGlobal = totalInscritos > 0 ? ((totalAsistieron / totalInscritos) * 100).toFixed(1) : '0';
+    const pctCompra = totalAsistieron > 0 ? ((totalCompraron / totalAsistieron) * 100).toFixed(1) : '0';
 
     document.getElementById('global-stats').innerHTML = `
-        <div class="stat-card"><div class="stat-value">${totalEvents}</div><div class="stat-label">Total Eventos</div></div>
-        <div class="stat-card"><div class="stat-value">${totalInscritos}</div><div class="stat-label">Total Inscritos</div></div>
-        <div class="stat-card"><div class="stat-value">${pctGlobal}%</div><div class="stat-label">Asistencia Global</div></div>
-        <div class="stat-card"><div class="stat-value">${pctCompra}%</div><div class="stat-label">Tasa de Compra</div></div>
+        <div class="stat-card">
+            <div class="stat-icon purple">&#128197;</div>
+            <div class="stat-info">
+                <div class="stat-label">Total Eventos</div>
+                <div class="stat-value">${totalEvents}</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon blue">&#128101;</div>
+            <div class="stat-info">
+                <div class="stat-label">Total Inscritos</div>
+                <div class="stat-value">${totalInscritos.toLocaleString()}</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon green">&#9989;</div>
+            <div class="stat-info">
+                <div class="stat-label">% Asistencia Global</div>
+                <div class="stat-value">${pctGlobal}%</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon orange">&#128176;</div>
+            <div class="stat-info">
+                <div class="stat-label">Tasa de Compra</div>
+                <div class="stat-value">${pctCompra}%</div>
+            </div>
+        </div>
     `;
 
     // Per-event table
@@ -818,19 +1358,32 @@ function refreshStats() {
         const total = ev.attendees.length;
         const att = ev.attendees.filter(a => a.attended).length;
         const pct = total > 0 ? Math.round((att / total) * 100) : 0;
-        const bought = ev.attendees.filter(a => a.purchased).length;
+
+        const today = new Date().toISOString().split('T')[0];
+        let statusBadge;
+        if (pct === 100 && total > 0) {
+            statusBadge = '<span class="badge badge-success">Completado</span>';
+        } else if (ev.date <= today && total > 0) {
+            statusBadge = '<span class="badge badge-info">En curso</span>';
+        } else {
+            statusBadge = '<span class="badge badge-warning">Planificacion</span>';
+        }
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td>${esc(ev.name)}</td>
-            <td>${formatDate(ev.date)}</td>
-            <td>${total}</td>
-            <td>${att}</td>
             <td>
-                <div class="progress-bar-container" style="height:18px;width:100px;display:inline-block;vertical-align:middle;">
-                    <div class="progress-bar-fill" style="width:${pct}%">${pct}%</div>
+                <strong>${esc(ev.name)}</strong>
+            </td>
+            <td>${total}</td>
+            <td>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div class="progress-bar-container" style="width:80px;height:6px;display:inline-block;">
+                        <div class="progress-bar-fill purple" style="width:${pct}%"></div>
+                    </div>
+                    <span style="font-size:0.85rem;font-weight:600;">${pct}%</span>
                 </div>
             </td>
-            <td>${bought}</td>`;
+            <td>${statusBadge}</td>`;
         tbody.appendChild(tr);
     });
 
@@ -844,18 +1397,27 @@ function refreshStats() {
         });
     });
     const sorted = Object.entries(productCount).sort((a, b) => b[1] - a[1]);
-    const tpBody = document.getElementById('top-products-body');
+    const tpList = document.getElementById('top-products-list');
     const noPS = document.getElementById('no-products-stats');
-    tpBody.innerHTML = '';
+    tpList.innerHTML = '';
 
     if (sorted.length === 0) {
         noPS.style.display = 'block';
     } else {
         noPS.style.display = 'none';
-        sorted.forEach(([name, count]) => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `<td>${esc(name)}</td><td><strong>${count}</strong></td>`;
-            tpBody.appendChild(tr);
+        const maxCount = sorted[0][1];
+        sorted.slice(0, 5).forEach(([name, count]) => {
+            const barPct = maxCount > 0 ? Math.round((count / maxCount) * 100) : 0;
+            const item = document.createElement('div');
+            item.className = 'top-product-item';
+            item.innerHTML = `
+                <div class="tp-icon">&#128230;</div>
+                <div class="tp-info">
+                    <div class="tp-name">${esc(name)}</div>
+                    <div class="tp-bar"><div class="tp-bar-fill" style="width:${barPct}%"></div></div>
+                </div>
+                <div class="tp-count">${count}</div>`;
+            tpList.appendChild(item);
         });
     }
 }
@@ -869,7 +1431,6 @@ function refreshPhones() {
     const noPhones = document.getElementById('no-phones');
     tbody.innerHTML = '';
 
-    // Build a directory from all events
     const contactMap = {};
     appData.events.forEach(ev => {
         ev.attendees.forEach(att => {
@@ -878,7 +1439,6 @@ function refreshPhones() {
                 contactMap[key] = { name: att.name, phone: att.phone || '', events: [] };
             }
             contactMap[key].events.push(ev.name);
-            // Update phone if this entry has one and the existing one doesn't
             if (att.phone && !contactMap[key].phone) {
                 contactMap[key].phone = att.phone;
             }
@@ -897,12 +1457,19 @@ function refreshPhones() {
     }
     noPhones.style.display = 'none';
 
-    contacts.forEach(c => {
+    contacts.forEach((c, idx) => {
+        const initials = c.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+        const aColor = avatarColors[idx % avatarColors.length];
         const eventTags = [...new Set(c.events)].map(e => `<span class="product-tag">${esc(e)}</span>`).join(' ');
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><strong>${esc(c.name)}</strong></td>
-            <td>${c.phone ? esc(c.phone) : '<span style="color:#bbb">Sin teléfono</span>'}</td>
+            <td>
+                <div class="attendee-cell">
+                    <div class="avatar ${aColor}">${initials}</div>
+                    <strong>${esc(c.name)}</strong>
+                </div>
+            </td>
+            <td>${c.phone ? esc(c.phone) : '<span style="color:#ccc;font-style:italic;">Sin telefono</span>'}</td>
             <td><div class="product-tags">${eventTags}</div></td>
             <td class="actions">
                 <button class="btn btn-sm btn-outline" onclick="editPhone('${esc(c.name.replace(/'/g, "\\'"))}')">Editar</button>
@@ -912,9 +1479,8 @@ function refreshPhones() {
 }
 
 function editPhone(name) {
-    const newPhone = prompt('Introduce el teléfono para ' + name + ':');
+    const newPhone = prompt('Introduce el telefono para ' + name + ':');
     if (newPhone === null) return;
-    // Update phone in all events for this person
     appData.events.forEach(ev => {
         ev.attendees.forEach(att => {
             if (att.name.toLowerCase() === name.toLowerCase()) {
@@ -937,6 +1503,12 @@ function esc(str) {
 function formatDate(dateStr) {
     const [y, m, d] = dateStr.split('-');
     return `${d}/${m}/${y}`;
+}
+
+function formatDateLong(dateStr) {
+    const months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    const [y, m, d] = dateStr.split('-');
+    return `${parseInt(d)} ${months[parseInt(m)-1]}, ${y}`;
 }
 
 // ---- INIT ----
