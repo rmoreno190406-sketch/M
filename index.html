@@ -158,8 +158,8 @@
             margin-bottom: 4px;
         }
         .card .card-subtitle {
-            font-size: 0.83rem;
-            color: #999;
+            font-size: 0.88rem;
+            color: #64748b;
             margin-bottom: 18px;
         }
 
@@ -266,7 +266,7 @@
         .btn-danger:hover { background: #c82333; }
         .btn-secondary { background: #6c757d; color: white; }
         .btn-secondary:hover { background: #5a6268; }
-        .btn-sm { padding: 7px 14px; font-size: 0.8rem; border-radius: 8px; }
+        .btn-sm { padding: 8px 14px; font-size: 0.82rem; border-radius: 9px; }
         .btn-outline {
             background: transparent;
             border: 1px solid #5B5FC7;
@@ -741,6 +741,43 @@
             font-size: 1.2rem;
         }
 
+
+
+        /* ---- 2026 UI REFRESH OVERRIDES ---- */
+        body { background: #f3f4f8; color: #0f172a; }
+        .sidebar { width: 270px; border-right: 1px solid #dbe2ee; }
+        .sidebar-brand { padding: 26px 22px; }
+        .sidebar-brand .brand-icon { width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(145deg, #4f46e5, #5b5fc7); }
+        .sidebar-brand .brand-text h2 { font-size: 1.25rem; color: #111827; }
+        .sidebar-brand .brand-text span { color: #64748b; text-transform: uppercase; letter-spacing: .04em; }
+        .sidebar-nav { padding: 10px 16px; }
+        .nav-item { border-radius: 12px; color: #334155; }
+        .nav-item.active { background: #e9e9ff; color: #4338ca; }
+        .nav-item:hover { background: #efefff; color: #4338ca; }
+
+        .main-content { margin-left: 270px; }
+        .top-bar { padding: 16px 34px; border-bottom: 1px solid #dbe2ee; }
+        .top-bar h1 { font-size: 1.55rem; color: #0f172a; }
+        .top-actions { display: flex; align-items: center; gap: 12px; }
+        .profile-avatar { width: 40px; height: 40px; border-radius: 999px; background: linear-gradient(145deg, #c7d2fe, #6366f1); color: white; display:flex; align-items:center; justify-content:center; font-size:.86rem; font-weight:700; }
+
+        .page-content { max-width: 1420px; padding: 30px 34px; }
+        .card, .stat-card, .event-selector-card, .confirmation-card, .top-products-card { border: 1px solid #dbe2ee; border-radius: 16px; box-shadow: 0 2px 8px rgba(15,23,42,.04); }
+        .card .card-subtitle, .section-subtitle { color: #64748b; }
+
+        .btn { border-radius: 12px; font-size: .92rem; }
+        .btn-primary { background: #4f46e5; box-shadow: 0 8px 14px rgba(79,70,229,.18); }
+        .btn-primary:hover { background: #4338ca; }
+        .btn-outline { border-color: #4f46e5; color: #4f46e5; }
+
+        input, select, textarea { border: 1px solid #d2dae8; border-radius: 12px; }
+        input:focus, select:focus, textarea:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12); }
+
+        table th { background: #f8fafc; color: #64748b; border-bottom: 1px solid #e2e8f0; letter-spacing: .08em; }
+        table td { border-bottom: 1px solid #edf2f7; }
+        tr:hover td { background: #fafaff; }
+
+
         /* ---- RESPONSIVE ---- */
         @media (max-width: 900px) {
             .stats-layout {
@@ -809,7 +846,11 @@
     <div class="top-bar">
         <div style="display:flex;align-items:center;gap:12px;">
             <button class="sidebar-toggle" id="sidebar-toggle">&#9776;</button>
-            <h1 id="page-title">Panel de Gestion Capilar</h1>
+            <h1 id="page-title">Panel de Eventos</h1>
+        </div>
+        <div class="top-actions">
+            <button class="btn btn-outline btn-sm" onclick="exportStatsPDF()">&#128196; Exportar PDF</button>
+            <div class="profile-avatar">AD</div>
         </div>
     </div>
 
@@ -1153,9 +1194,9 @@ let appData = loadData();
 
 // ---- SIDEBAR NAV ----
 const pageTitles = {
-    events: 'Panel de Gestion Capilar',
+    events: 'Panel de Eventos',
     attendance: 'Asistencia de Eventos',
-    stats: 'Estadisticas Globales',
+    stats: 'Panel de Estadisticas',
     products: 'Catalogo de Productos',
     phones: 'Directorio de Telefonos'
 };
