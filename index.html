@@ -780,8 +780,9 @@
             </div>
 
             <div id="attendance-panel" style="display:none;">
-                <div id="closed-banner" style="display:none;background:#f3f4f6;border:1px solid #d1d5db;border-radius:10px;padding:14px 20px;margin-bottom:18px;color:#6b7280;font-weight:600;text-align:center;">
-                    &#128274; Este evento esta cerrado. No se pueden realizar cambios.
+                <div id="closed-banner" style="display:none;background:#f3f4f6;border:1px solid #d1d5db;border-radius:10px;padding:14px 20px;margin-bottom:18px;text-align:center;">
+                    <span style="color:#6b7280;font-weight:600;">&#9989; Este evento esta finalizado.</span>
+                    <button class="btn btn-sm btn-outline" style="margin-left:12px;border-color:#16a34a;color:#16a34a;" id="btn-reopen-from-attendance">&#128275; Reabrir Evento</button>
                 </div>
                 <div class="section-header">
                     <div>
@@ -984,6 +985,47 @@
     </div>
 </div>
 
+<!-- Modal: Editar evento -->
+<div class="modal-overlay" id="modal-edit-event">
+    <div class="modal">
+        <h3>Editar Evento</h3>
+        <div class="form-group">
+            <label>Nombre del Evento</label>
+            <input type="text" id="edit-event-name" placeholder="Nombre del evento" style="width:100%;">
+        </div>
+        <div class="form-group" style="margin-top:12px;">
+            <label>Fecha del Evento</label>
+            <input type="date" id="edit-event-date" style="width:100%;">
+        </div>
+        <input type="hidden" id="edit-event-id">
+        <div style="margin-top:18px; display:flex; gap:8px; justify-content:flex-end;">
+            <button class="btn btn-secondary" onclick="document.getElementById('modal-edit-event').classList.remove('active')">Cancelar</button>
+            <button class="btn btn-primary" id="btn-save-edit-event">Guardar Cambios</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Editar asistente -->
+<div class="modal-overlay" id="modal-edit-attendee">
+    <div class="modal">
+        <h3>Editar Persona</h3>
+        <div class="form-group">
+            <label>Nombre completo</label>
+            <input type="text" id="edit-att-name" placeholder="Nombre y apellidos" style="width:100%;">
+        </div>
+        <div class="form-group" style="margin-top:12px;">
+            <label>Telefono</label>
+            <input type="tel" id="edit-att-phone" placeholder="Ej: 612 345 678" style="width:100%;">
+        </div>
+        <input type="hidden" id="edit-att-event-id">
+        <input type="hidden" id="edit-att-idx">
+        <div style="margin-top:18px; display:flex; gap:8px; justify-content:flex-end;">
+            <button class="btn btn-secondary" onclick="document.getElementById('modal-edit-attendee').classList.remove('active')">Cancelar</button>
+            <button class="btn btn-primary" id="btn-save-edit-attendee">Guardar Cambios</button>
+        </div>
+    </div>
+</div>
+
 <script>
 // ---- DATA LAYER ----
 function loadData() {
@@ -1067,7 +1109,7 @@ function refreshEvents() {
         const today = new Date().toISOString().split('T')[0];
         let status, statusClass;
         if (ev.closed) {
-            status = 'Cerrado'; statusClass = 'closed';
+            status = 'Finalizado'; statusClass = 'closed';
         } else if (pct === 100 && total > 0) {
             status = 'Completado'; statusClass = 'completed';
         } else if (ev.date <= today && total > 0) {
@@ -1080,8 +1122,8 @@ function refreshEvents() {
         const pColor = progressColors[i % progressColors.length];
 
         const closeBtn = ev.closed
-            ? '<span style="font-size:0.8rem;color:#6b7280;font-weight:600;">&#128274; Evento cerrado</span>'
-            : `<button class="btn btn-sm btn-outline" style="border-color:#dc3545;color:#dc3545;" onclick="event.stopPropagation();closeEvent('${ev.id}')">&#128274; Cerrar Evento</button>`;
+            ? `<button class="btn btn-sm btn-outline" style="border-color:#16a34a;color:#16a34a;" onclick="event.stopPropagation();reopenEvent('${ev.id}')">&#128275; Reabrir Evento</button>`
+            : `<button class="btn btn-sm btn-outline" style="border-color:#dc3545;color:#dc3545;" onclick="event.stopPropagation();closeEvent('${ev.id}')">&#9989; Finalizar Evento</button>`;
 
         const card = document.createElement('div');
         card.className = 'event-card';
@@ -1102,12 +1144,17 @@ function refreshEvents() {
                         <div class="progress-bar-fill ${pColor}" style="width:${pct}%"></div>
                     </div>
                 </div>
-                <div class="event-card-footer">
-                    <div style="display:flex;gap:6px;align-items:center;">
-                        ${!ev.closed ? `<button class="btn btn-ghost btn-sm" onclick="goToEventAttendance('${ev.id}')">Gestionar</button>` : ''}
+                <div class="event-card-footer" style="flex-direction:column;align-items:stretch;gap:10px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div style="display:flex;gap:6px;align-items:center;">
+                            <button class="btn btn-ghost btn-sm" onclick="goToEventAttendance('${ev.id}')">Gestionar</button>
+                            <button class="btn btn-ghost btn-sm" style="color:#f59e0b;" onclick="event.stopPropagation();openEditEventModal('${ev.id}')">&#9998; Editar</button>
+                        </div>
+                        <span class="attendee-count">${total} inscritos</span>
+                    </div>
+                    <div style="display:flex;justify-content:center;">
                         ${closeBtn}
                     </div>
-                    <span class="attendee-count">${total} inscritos</span>
                 </div>
             </div>`;
         grid.appendChild(card);
@@ -1127,21 +1174,24 @@ function goToEventAttendance(eventId) {
 }
 
 function closeEvent(id) {
-    if (!confirm('Cerrar este evento? Ya no se podran hacer cambios de asistencia ni inscripciones.')) return;
+    if (!confirm('Finalizar este evento? Podras reabrirlo mas tarde si lo necesitas.')) return;
     const event = appData.events.find(e => e.id === id);
     if (event) {
         event.closed = true;
         saveData(appData);
         refreshEvents();
+        refreshAttendance();
     }
 }
 
 function reopenEvent(id) {
+    if (!confirm('Reabrir este evento? Se podran volver a hacer cambios.')) return;
     const event = appData.events.find(e => e.id === id);
     if (event) {
         event.closed = false;
         saveData(appData);
         refreshEvents();
+        refreshAttendance();
     }
 }
 
@@ -1151,6 +1201,61 @@ function deleteEvent(id) {
     saveData(appData);
     refreshEvents();
 }
+
+// ---- EDIT EVENT ----
+function openEditEventModal(id) {
+    const ev = appData.events.find(e => e.id === id);
+    if (!ev) return;
+    document.getElementById('edit-event-id').value = id;
+    document.getElementById('edit-event-name').value = ev.name;
+    document.getElementById('edit-event-date').value = ev.date;
+    document.getElementById('modal-edit-event').classList.add('active');
+}
+
+document.getElementById('btn-save-edit-event').addEventListener('click', () => {
+    const id = document.getElementById('edit-event-id').value;
+    const name = document.getElementById('edit-event-name').value.trim();
+    const date = document.getElementById('edit-event-date').value;
+    if (!name) return alert('Introduce un nombre para el evento.');
+    if (!date) return alert('Selecciona una fecha.');
+    const ev = appData.events.find(e => e.id === id);
+    if (ev) {
+        ev.name = name;
+        ev.date = date;
+        saveData(appData);
+        refreshEvents();
+        refreshAttendance();
+    }
+    document.getElementById('modal-edit-event').classList.remove('active');
+});
+
+// ---- EDIT ATTENDEE ----
+function openEditAttendeeModal(eventId, idx) {
+    const ev = appData.events.find(e => e.id === eventId);
+    if (!ev || !ev.attendees[idx]) return;
+    const att = ev.attendees[idx];
+    document.getElementById('edit-att-event-id').value = eventId;
+    document.getElementById('edit-att-idx').value = idx;
+    document.getElementById('edit-att-name').value = att.name;
+    document.getElementById('edit-att-phone').value = att.phone || '';
+    document.getElementById('modal-edit-attendee').classList.add('active');
+}
+
+document.getElementById('btn-save-edit-attendee').addEventListener('click', () => {
+    const eventId = document.getElementById('edit-att-event-id').value;
+    const idx = parseInt(document.getElementById('edit-att-idx').value);
+    const name = document.getElementById('edit-att-name').value.trim();
+    const phone = document.getElementById('edit-att-phone').value.trim();
+    if (!name) return alert('Introduce un nombre.');
+    const ev = appData.events.find(e => e.id === eventId);
+    if (ev && ev.attendees[idx]) {
+        ev.attendees[idx].name = name;
+        ev.attendees[idx].phone = phone;
+        saveData(appData);
+        refreshAttendance();
+    }
+    document.getElementById('modal-edit-attendee').classList.remove('active');
+});
 
 // ---- EVENT SELECTORS ----
 function refreshEventSelectors() {
@@ -1165,6 +1270,11 @@ function refreshEventSelectors() {
 
 // ---- ATTENDANCE ----
 document.getElementById('select-event-attendance').addEventListener('change', refreshAttendance);
+
+document.getElementById('btn-reopen-from-attendance').addEventListener('click', () => {
+    const event = getSelectedEvent();
+    if (event) reopenEvent(event.id);
+});
 
 function getSelectedEvent() {
     const id = document.getElementById('select-event-attendance').value;
@@ -1193,7 +1303,7 @@ function refreshAttendance() {
     const pct = total > 0 ? Math.round((attended / total) * 100) : 0;
 
     document.getElementById('conf-text').textContent = isClosed
-        ? `${attended} de ${total} confirmados — EVENTO CERRADO`
+        ? `${attended} de ${total} confirmados — EVENTO FINALIZADO`
         : `${attended} de ${total} confirmados`;
     document.getElementById('conf-pct').textContent = pct + '%';
     if (isClosed) document.getElementById('conf-pct').style.color = '#6b7280';
@@ -1251,6 +1361,7 @@ function refreshAttendance() {
                 ${att.attended !== true ? `<button class="btn btn-sm btn-success" onclick="markAttendance('${event.id}',${idx},true)">&#10003;</button>` : ''}
                 ${att.attended !== false ? `<button class="btn btn-sm btn-danger" onclick="markAttendance('${event.id}',${idx},false)">&#10007;</button>` : ''}
                 <button class="btn btn-sm btn-ghost" onclick="openProductsModal('${event.id}',${idx})">Asignar Producto</button>
+                <button class="btn btn-sm btn-ghost" style="color:#f59e0b;" onclick="openEditAttendeeModal('${event.id}',${idx})">&#9998; Editar</button>
                 <button class="btn btn-sm btn-secondary" onclick="removeAttendee('${event.id}',${idx})">&#128465;</button>
                 `}
             </td>`;
@@ -1504,7 +1615,7 @@ function refreshStats() {
         const today = new Date().toISOString().split('T')[0];
         let statusBadge;
         if (ev.closed) {
-            statusBadge = '<span class="badge badge-closed">Cerrado</span>';
+            statusBadge = '<span class="badge badge-closed">Finalizado</span>';
         } else if (pct === 100 && total > 0) {
             statusBadge = '<span class="badge badge-success">Completado</span>';
         } else if (ev.date <= today && total > 0) {
