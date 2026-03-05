@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DS Hair Expert - Gestión de Eventos</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
@@ -842,6 +844,9 @@
 
         <!-- SECTION: Estadisticas -->
         <div class="section-content" id="section-stats">
+            <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+                <button class="btn btn-primary" onclick="exportStatsPDF()">&#128196; Exportar PDF Ventas</button>
+            </div>
             <div class="stats-grid" id="global-stats"></div>
 
             <div class="stats-layout">
@@ -885,7 +890,11 @@
                         <label>Nombre del Producto</label>
                         <input type="text" id="product-name" placeholder="Ej: Shampoo Revitalizante DS">
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" style="flex:0.6;min-width:140px;">
+                        <label>CN (Codigo Nacional)</label>
+                        <input type="text" id="product-cn" placeholder="Ej: 123456">
+                    </div>
+                    <div class="form-group" style="flex:0.5;min-width:120px;">
                         <label>Precio (Opcional)</label>
                         <input type="number" id="product-price" placeholder="0.00" step="0.01" min="0">
                     </div>
@@ -909,6 +918,7 @@
                         <thead>
                             <tr>
                                 <th>Producto</th>
+                                <th>CN</th>
                                 <th>Precio</th>
                                 <th>Acciones</th>
                             </tr>
@@ -1515,12 +1525,14 @@ document.getElementById('btn-modal-save').addEventListener('click', () => {
 // ---- PRODUCTS ----
 document.getElementById('btn-add-product').addEventListener('click', () => {
     const name = document.getElementById('product-name').value.trim();
+    const cn = document.getElementById('product-cn').value.trim();
     const price = document.getElementById('product-price').value;
     if (!name) return alert('Introduce el nombre del producto.');
 
-    appData.products.push({ name, price: price || '' });
+    appData.products.push({ name, cn: cn || '', price: price || '' });
     saveData(appData);
     document.getElementById('product-name').value = '';
+    document.getElementById('product-cn').value = '';
     document.getElementById('product-price').value = '';
     refreshProducts();
 });
@@ -1545,6 +1557,7 @@ function refreshProducts() {
                     <strong>${esc(p.name)}</strong>
                 </div>
             </td>
+            <td><span style="font-family:monospace;color:#5B5FC7;font-weight:600;">${p.cn ? esc(p.cn) : '—'}</span></td>
             <td><strong>${p.price ? Number(p.price).toFixed(2) + ' EUR' : '—'}</strong></td>
             <td class="actions">
                 <button class="btn btn-sm btn-danger" onclick="deleteProduct(${idx})">&#128465;</button>
@@ -1676,6 +1689,184 @@ function refreshStats() {
             tpList.appendChild(item);
         });
     }
+}
+
+// ---- PDF EXPORT ----
+function exportStatsPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const pageW = doc.internal.pageSize.getWidth();
+    let y = 20;
+
+    // Title
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text('DS Hair Expert - Informe de Ventas', pageW / 2, y, { align: 'center' });
+    y += 8;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(120);
+    doc.text('Generado el ' + new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }), pageW / 2, y, { align: 'center' });
+    doc.setTextColor(0);
+    y += 12;
+
+    // Global stats
+    let totalInscritos = 0, totalAsistieron = 0, totalCompraron = 0;
+    appData.events.forEach(ev => {
+        totalInscritos += ev.attendees.length;
+        totalAsistieron += ev.attendees.filter(a => a.attended).length;
+        totalCompraron += ev.attendees.filter(a => a.purchased).length;
+    });
+    const pctAsist = totalInscritos > 0 ? ((totalAsistieron / totalInscritos) * 100).toFixed(1) : '0';
+
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Resumen General', 14, y);
+    y += 7;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Total Eventos: ${appData.events.length}    |    Inscritos: ${totalInscritos}    |    Asistencia: ${pctAsist}%`, 14, y);
+    y += 10;
+
+    // Collect all product sales across all events with discounts
+    const productSales = {};
+    appData.products.forEach(p => {
+        productSales[p.name] = { cn: p.cn || '', price: p.price ? Number(p.price) : 0, qty: 0, totalOriginal: 0, totalDiscount: 0, totalFinal: 0 };
+    });
+
+    appData.events.forEach(ev => {
+        ev.attendees.forEach(att => {
+            const prods = att.products || [];
+            const numProds = prods.length;
+            const discountPct = numProds >= 2 ? 15 : (numProds === 1 ? 10 : 0);
+
+            prods.forEach(pName => {
+                if (!productSales[pName]) {
+                    const catalogP = appData.products.find(p => p.name === pName);
+                    productSales[pName] = { cn: (catalogP && catalogP.cn) || '', price: (catalogP && catalogP.price) ? Number(catalogP.price) : 0, qty: 0, totalOriginal: 0, totalDiscount: 0, totalFinal: 0 };
+                }
+                const ps = productSales[pName];
+                const price = ps.price;
+                const disc = price * (discountPct / 100);
+                ps.qty += 1;
+                ps.totalOriginal += price;
+                ps.totalDiscount += disc;
+                ps.totalFinal += (price - disc);
+            });
+        });
+    });
+
+    // Product sales table
+    const soldProducts = Object.entries(productSales).filter(([, v]) => v.qty > 0);
+    soldProducts.sort((a, b) => b[1].qty - a[1].qty);
+
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Detalle de Ventas por Producto', 14, y);
+    y += 2;
+
+    const tableBody = soldProducts.map(([name, d]) => [
+        name,
+        d.cn || '—',
+        d.qty.toString(),
+        d.price > 0 ? d.price.toFixed(2) + ' EUR' : '—',
+        d.totalOriginal > 0 ? d.totalOriginal.toFixed(2) + ' EUR' : '—',
+        d.totalDiscount > 0 ? '-' + d.totalDiscount.toFixed(2) + ' EUR' : '—',
+        d.totalFinal > 0 ? d.totalFinal.toFixed(2) + ' EUR' : '—'
+    ]);
+
+    let grandOriginal = 0, grandDiscount = 0, grandFinal = 0;
+    soldProducts.forEach(([, d]) => {
+        grandOriginal += d.totalOriginal;
+        grandDiscount += d.totalDiscount;
+        grandFinal += d.totalFinal;
+    });
+
+    tableBody.push([
+        { content: 'TOTALES', styles: { fontStyle: 'bold' } },
+        '', '',
+        '',
+        { content: grandOriginal.toFixed(2) + ' EUR', styles: { fontStyle: 'bold' } },
+        { content: '-' + grandDiscount.toFixed(2) + ' EUR', styles: { fontStyle: 'bold', textColor: [220, 38, 38] } },
+        { content: grandFinal.toFixed(2) + ' EUR', styles: { fontStyle: 'bold', textColor: [91, 95, 199] } }
+    ]);
+
+    doc.autoTable({
+        startY: y,
+        head: [['Producto', 'CN', 'Uds.', 'PVP', 'Original', 'Descuento', 'Total']],
+        body: tableBody,
+        theme: 'striped',
+        headStyles: { fillColor: [91, 95, 199], fontSize: 8 },
+        styles: { fontSize: 8, cellPadding: 3 },
+        margin: { left: 14, right: 14 }
+    });
+
+    y = doc.lastAutoTable.finalY + 12;
+
+    // Discount rules note
+    doc.setFontSize(8);
+    doc.setTextColor(120);
+    doc.text('* Descuentos aplicados: 1 producto = 10% | 2+ productos = 15% cada uno', 14, y);
+    y += 10;
+    doc.setTextColor(0);
+
+    // Per-event breakdown
+    if (y > 250) { doc.addPage(); y = 20; }
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Ventas por Evento', 14, y);
+    y += 2;
+
+    const eventTableBody = [];
+    appData.events.forEach(ev => {
+        const productCount = {};
+        let evOriginal = 0, evDiscount = 0, evFinal = 0;
+        ev.attendees.forEach(att => {
+            const prods = att.products || [];
+            const numProds = prods.length;
+            const discPct = numProds >= 2 ? 15 : (numProds === 1 ? 10 : 0);
+            prods.forEach(pName => {
+                productCount[pName] = (productCount[pName] || 0) + 1;
+                const catalogP = appData.products.find(p => p.name === pName);
+                const price = (catalogP && catalogP.price) ? Number(catalogP.price) : 0;
+                const disc = price * (discPct / 100);
+                evOriginal += price;
+                evDiscount += disc;
+                evFinal += (price - disc);
+            });
+        });
+        const prodSummary = Object.entries(productCount).map(([n, c]) => `${n} x${c}`).join(', ') || 'Sin ventas';
+        eventTableBody.push([
+            ev.name,
+            formatDateLong(ev.date),
+            ev.attendees.length.toString(),
+            prodSummary,
+            evFinal > 0 ? evFinal.toFixed(2) + ' EUR' : '—'
+        ]);
+    });
+
+    doc.autoTable({
+        startY: y,
+        head: [['Evento', 'Fecha', 'Asist.', 'Productos Vendidos', 'Total']],
+        body: eventTableBody,
+        theme: 'striped',
+        headStyles: { fillColor: [91, 95, 199], fontSize: 8 },
+        styles: { fontSize: 8, cellPadding: 3 },
+        columnStyles: { 3: { cellWidth: 60 } },
+        margin: { left: 14, right: 14 }
+    });
+
+    // Footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text('DS Hair Expert - Informe de Ventas', 14, doc.internal.pageSize.getHeight() - 10);
+        doc.text(`Pagina ${i} de ${pageCount}`, pageW - 14, doc.internal.pageSize.getHeight() - 10, { align: 'right' });
+    }
+
+    doc.save('DS_Hair_Expert_Ventas_' + new Date().toISOString().split('T')[0] + '.pdf');
 }
 
 // ---- PHONES ----
