@@ -272,6 +272,7 @@
         <button class="tab-btn" data-tab="attendance">Asistencia</button>
         <button class="tab-btn" data-tab="stats">Estadísticas</button>
         <button class="tab-btn" data-tab="products">Productos</button>
+        <button class="tab-btn" data-tab="phones">Teléfonos</button>
     </div>
 
     <!-- TAB: Eventos -->
@@ -325,6 +326,10 @@
                     <label>Nombre completo</label>
                     <input type="text" id="attendee-name" placeholder="Nombre y apellidos">
                 </div>
+                <div class="form-group">
+                    <label>Teléfono</label>
+                    <input type="tel" id="attendee-phone" placeholder="Ej: 612 345 678">
+                </div>
             </div>
             <button class="btn btn-primary" id="btn-add-attendee">Inscribir</button>
         </div>
@@ -344,6 +349,7 @@
                     <thead>
                         <tr>
                             <th>Nombre</th>
+                            <th>Teléfono</th>
                             <th>Asistencia</th>
                             <th>Compra</th>
                             <th>Productos</th>
@@ -431,6 +437,37 @@
             <div class="empty-state" id="no-products"><p>No hay productos en el catálogo.</p></div>
         </div>
     </div>
+
+    <!-- TAB: Teléfonos -->
+    <div class="tab-content" id="tab-phones">
+        <div class="card">
+            <h2>Directorio de Contactos</h2>
+            <p style="color:#888; margin-bottom:16px;">Todos los contactos registrados en los eventos con su número de teléfono.</p>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Buscar por nombre</label>
+                    <input type="text" id="phone-search" placeholder="Escribe para filtrar...">
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <h2>Lista de Teléfonos</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Teléfono</th>
+                            <th>Eventos</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="phones-table-body"></tbody>
+                </table>
+            </div>
+            <div class="empty-state" id="no-phones"><p>No hay contactos con teléfono registrado.</p></div>
+        </div>
+    </div>
 </div>
 
 <!-- Modal: Añadir productos a asistente -->
@@ -449,7 +486,7 @@
 // ---- DATA LAYER ----
 function loadData() {
     const data = localStorage.getItem('hairEventData');
-    return data ? JSON.parse(data) : { events: [], products: [] };
+    return data ? JSON.parse(data) : { events: [], products: [], contacts: [] };
 }
 
 function saveData(data) {
@@ -467,6 +504,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
         document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
         if (btn.dataset.tab === 'attendance') refreshAttendance();
         if (btn.dataset.tab === 'stats') refreshStats();
+        if (btn.dataset.tab === 'phones') refreshPhones();
     });
 });
 
@@ -608,6 +646,7 @@ function refreshAttendance() {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td><strong>${esc(att.name)}</strong></td>
+            <td>${att.phone ? esc(att.phone) : '<span style="color:#bbb">—</span>'}</td>
             <td>${attendanceBadge}</td>
             <td>${purchaseBadge}</td>
             <td><div class="product-tags">${productTags || '<span style="color:#bbb">—</span>'}</div></td>
@@ -625,11 +664,13 @@ document.getElementById('btn-add-attendee').addEventListener('click', () => {
     const event = getSelectedEvent();
     if (!event) return;
     const name = document.getElementById('attendee-name').value.trim();
+    const phone = document.getElementById('attendee-phone').value.trim();
     if (!name) return alert('Introduce el nombre de la persona.');
 
-    event.attendees.push({ name, attended: null, purchased: false, products: [] });
+    event.attendees.push({ name, phone: phone || '', attended: null, purchased: false, products: [] });
     saveData(appData);
     document.getElementById('attendee-name').value = '';
+    document.getElementById('attendee-phone').value = '';
     refreshAttendance();
     refreshEvents();
 });
@@ -817,6 +858,73 @@ function refreshStats() {
             tpBody.appendChild(tr);
         });
     }
+}
+
+// ---- PHONES ----
+document.getElementById('phone-search').addEventListener('input', refreshPhones);
+
+function refreshPhones() {
+    const search = document.getElementById('phone-search').value.trim().toLowerCase();
+    const tbody = document.getElementById('phones-table-body');
+    const noPhones = document.getElementById('no-phones');
+    tbody.innerHTML = '';
+
+    // Build a directory from all events
+    const contactMap = {};
+    appData.events.forEach(ev => {
+        ev.attendees.forEach(att => {
+            const key = att.name.toLowerCase();
+            if (!contactMap[key]) {
+                contactMap[key] = { name: att.name, phone: att.phone || '', events: [] };
+            }
+            contactMap[key].events.push(ev.name);
+            // Update phone if this entry has one and the existing one doesn't
+            if (att.phone && !contactMap[key].phone) {
+                contactMap[key].phone = att.phone;
+            }
+        });
+    });
+
+    let contacts = Object.values(contactMap);
+    if (search) {
+        contacts = contacts.filter(c => c.name.toLowerCase().includes(search));
+    }
+    contacts.sort((a, b) => a.name.localeCompare(b.name));
+
+    if (contacts.length === 0) {
+        noPhones.style.display = 'block';
+        return;
+    }
+    noPhones.style.display = 'none';
+
+    contacts.forEach(c => {
+        const eventTags = [...new Set(c.events)].map(e => `<span class="product-tag">${esc(e)}</span>`).join(' ');
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><strong>${esc(c.name)}</strong></td>
+            <td>${c.phone ? esc(c.phone) : '<span style="color:#bbb">Sin teléfono</span>'}</td>
+            <td><div class="product-tags">${eventTags}</div></td>
+            <td class="actions">
+                <button class="btn btn-sm btn-outline" onclick="editPhone('${esc(c.name.replace(/'/g, "\\'"))}')">Editar</button>
+            </td>`;
+        tbody.appendChild(tr);
+    });
+}
+
+function editPhone(name) {
+    const newPhone = prompt('Introduce el teléfono para ' + name + ':');
+    if (newPhone === null) return;
+    // Update phone in all events for this person
+    appData.events.forEach(ev => {
+        ev.attendees.forEach(att => {
+            if (att.name.toLowerCase() === name.toLowerCase()) {
+                att.phone = newPhone.trim();
+            }
+        });
+    });
+    saveData(appData);
+    refreshPhones();
+    refreshAttendance();
 }
 
 // ---- UTILS ----
