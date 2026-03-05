@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Eventos - Análisis Capilar</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            color: #333;
+        }
+        header {
+            background: linear-gradient(135deg, #6a3093, #a044ff);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+        }
+        header h1 { font-size: 1.5rem; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 20px;
+            background: white;
+            border-radius: 10px;
+            padding: 6px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            background: #6a3093;
+            color: white;
+        }
+        .tab-btn:hover:not(.active) { background: #f0e6ff; color: #6a3093; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+        .card h2 {
+            font-size: 1.2rem;
+            margin-bottom: 16px;
+            color: #6a3093;
+        }
+
+        /* Forms */
+        .form-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        .form-group { display: flex; flex-direction: column; flex: 1; min-width: 180px; }
+        .form-group label { font-size: 0.85rem; color: #666; margin-bottom: 4px; }
+        input, select {
+            padding: 10px 14px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input:focus, select:focus { border-color: #a044ff; }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-primary { background: #6a3093; color: white; }
+        .btn-primary:hover { background: #7b3aab; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-success:hover { background: #218838; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-secondary:hover { background: #5a6268; }
+        .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #6a3093;
+            color: #6a3093;
+        }
+        .btn-outline:hover { background: #6a3093; color: white; }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #6a3093;
+        }
+        .stat-label {
+            font-size: 0.85rem;
+            color: #888;
+            margin-top: 4px;
+        }
+        .stat-card .progress-ring {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 8px;
+        }
+
+        /* Table */
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th {
+            text-align: left;
+            padding: 12px 14px;
+            background: #f8f6fc;
+            color: #6a3093;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        td {
+            padding: 12px 14px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.95rem;
+        }
+        tr:hover td { background: #faf8ff; }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .badge-success { background: #d4edda; color: #155724; }
+        .badge-danger { background: #f8d7da; color: #721c24; }
+        .badge-warning { background: #fff3cd; color: #856404; }
+        .badge-info { background: #e7e3ff; color: #6a3093; }
+
+        /* Progress bar */
+        .progress-bar-container {
+            background: #e9ecef;
+            border-radius: 10px;
+            height: 24px;
+            overflow: hidden;
+            position: relative;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #6a3093, #a044ff);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: 600;
+            min-width: 40px;
+        }
+
+        /* Event selector */
+        .event-selector {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .event-selector select { min-width: 300px; }
+
+        /* Product tags */
+        .product-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+        .product-tag {
+            display: inline-block;
+            background: #e7e3ff;
+            color: #6a3093;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.78rem;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: white;
+            border-radius: 14px;
+            padding: 28px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal h3 { margin-bottom: 16px; color: #6a3093; }
+        .modal .form-group { margin-bottom: 12px; }
+
+        /* Actions column */
+        .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #aaa;
+        }
+        .empty-state p { font-size: 1rem; }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            header h1 { font-size: 1.1rem; }
+            .tabs { flex-direction: column; }
+            .event-selector select { min-width: 100%; }
+            .form-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Gestión de Eventos - Análisis Capilar</h1>
+</header>
+
+<div class="container">
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="events">Eventos</button>
+        <button class="tab-btn" data-tab="attendance">Asistencia</button>
+        <button class="tab-btn" data-tab="stats">Estadísticas</button>
+        <button class="tab-btn" data-tab="products">Productos</button>
+    </div>
+
+    <!-- TAB: Eventos -->
+    <div class="tab-content active" id="tab-events">
+        <div class="card">
+            <h2>Crear Nuevo Evento</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Nombre del evento</label>
+                    <input type="text" id="event-name" placeholder="Ej: Análisis Capilar Q1 2026">
+                </div>
+                <div class="form-group">
+                    <label>Fecha</label>
+                    <input type="date" id="event-date">
+                </div>
+            </div>
+            <button class="btn btn-primary" id="btn-create-event">Crear Evento</button>
+        </div>
+
+        <div class="card">
+            <h2>Eventos Creados</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Evento</th>
+                            <th>Fecha</th>
+                            <th>Inscritos</th>
+                            <th>Asistencia</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="events-table-body"></tbody>
+                </table>
+            </div>
+            <div class="empty-state" id="no-events"><p>No hay eventos creados todavía.</p></div>
+        </div>
+    </div>
+
+    <!-- TAB: Asistencia -->
+    <div class="tab-content" id="tab-attendance">
+        <div class="event-selector">
+            <label><strong>Evento:</strong></label>
+            <select id="select-event-attendance"><option value="">-- Selecciona un evento --</option></select>
+        </div>
+
+        <div class="card" id="attendance-panel" style="display:none;">
+            <h2>Inscribir Persona</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Nombre completo</label>
+                    <input type="text" id="attendee-name" placeholder="Nombre y apellidos">
+                </div>
+            </div>
+            <button class="btn btn-primary" id="btn-add-attendee">Inscribir</button>
+        </div>
+
+        <div class="card" id="attendance-stats-card" style="display:none;">
+            <h2>Resumen de Asistencia</h2>
+            <div class="stats-grid" id="attendance-stats"></div>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="attendance-progress">0%</div>
+            </div>
+        </div>
+
+        <div class="card" id="attendees-list-card" style="display:none;">
+            <h2>Lista de Asistentes</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Asistencia</th>
+                            <th>Compra</th>
+                            <th>Productos</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendees-table-body"></tbody>
+                </table>
+            </div>
+            <div class="empty-state" id="no-attendees"><p>No hay personas inscritas en este evento.</p></div>
+        </div>
+    </div>
+
+    <!-- TAB: Estadísticas -->
+    <div class="tab-content" id="tab-stats">
+        <div class="stats-grid" id="global-stats"></div>
+
+        <div class="card">
+            <h2>Resumen por Evento</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Evento</th>
+                            <th>Fecha</th>
+                            <th>Inscritos</th>
+                            <th>Asistieron</th>
+                            <th>% Asistencia</th>
+                            <th>Compraron</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stats-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Productos Más Vendidos (Global)</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Veces Vendido</th>
+                        </tr>
+                    </thead>
+                    <tbody id="top-products-body"></tbody>
+                </table>
+            </div>
+            <div class="empty-state" id="no-products-stats"><p>No hay datos de productos todavía.</p></div>
+        </div>
+    </div>
+
+    <!-- TAB: Productos -->
+    <div class="tab-content" id="tab-products">
+        <div class="card">
+            <h2>Gestión de Productos</h2>
+            <p style="color:#888; margin-bottom:16px;">Añade aquí los productos disponibles para asociar a las compras de los asistentes.</p>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Nombre del producto</label>
+                    <input type="text" id="product-name" placeholder="Ej: Champú Reparador">
+                </div>
+                <div class="form-group">
+                    <label>Precio (opcional)</label>
+                    <input type="number" id="product-price" placeholder="0.00" step="0.01" min="0">
+                </div>
+            </div>
+            <button class="btn btn-primary" id="btn-add-product">Añadir Producto</button>
+        </div>
+        <div class="card">
+            <h2>Catálogo de Productos</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Precio</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="products-table-body"></tbody>
+                </table>
+            </div>
+            <div class="empty-state" id="no-products"><p>No hay productos en el catálogo.</p></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Añadir productos a asistente -->
+<div class="modal-overlay" id="modal-products">
+    <div class="modal">
+        <h3>Productos comprados por <span id="modal-attendee-name"></span></h3>
+        <div id="modal-products-list"></div>
+        <div style="margin-top:16px; display:flex; gap:8px; justify-content:flex-end;">
+            <button class="btn btn-secondary" id="btn-modal-close">Cerrar</button>
+            <button class="btn btn-primary" id="btn-modal-save">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ---- DATA LAYER ----
+function loadData() {
+    const data = localStorage.getItem('hairEventData');
+    return data ? JSON.parse(data) : { events: [], products: [] };
+}
+
+function saveData(data) {
+    localStorage.setItem('hairEventData', JSON.stringify(data));
+}
+
+let appData = loadData();
+
+// ---- TABS ----
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+        if (btn.dataset.tab === 'attendance') refreshAttendance();
+        if (btn.dataset.tab === 'stats') refreshStats();
+    });
+});
+
+// ---- EVENTS ----
+document.getElementById('btn-create-event').addEventListener('click', () => {
+    const name = document.getElementById('event-name').value.trim();
+    const date = document.getElementById('event-date').value;
+    if (!name) return alert('Introduce un nombre para el evento.');
+    if (!date) return alert('Selecciona una fecha.');
+
+    appData.events.push({ id: Date.now().toString(), name, date, attendees: [] });
+    saveData(appData);
+    document.getElementById('event-name').value = '';
+    document.getElementById('event-date').value = '';
+    refreshEvents();
+});
+
+function refreshEvents() {
+    const tbody = document.getElementById('events-table-body');
+    const noEvents = document.getElementById('no-events');
+    tbody.innerHTML = '';
+
+    if (appData.events.length === 0) {
+        noEvents.style.display = 'block';
+        return;
+    }
+    noEvents.style.display = 'none';
+
+    appData.events.sort((a, b) => b.date.localeCompare(a.date));
+    appData.events.forEach(ev => {
+        const total = ev.attendees.length;
+        const attended = ev.attendees.filter(a => a.attended).length;
+        const pct = total > 0 ? Math.round((attended / total) * 100) : 0;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><strong>${esc(ev.name)}</strong></td>
+            <td>${formatDate(ev.date)}</td>
+            <td>${total}</td>
+            <td>
+                <div class="progress-bar-container" style="height:18px;width:120px;display:inline-block;vertical-align:middle;">
+                    <div class="progress-bar-fill" style="width:${pct}%">${pct}%</div>
+                </div>
+            </td>
+            <td class="actions">
+                <button class="btn btn-sm btn-danger" onclick="deleteEvent('${ev.id}')">Eliminar</button>
+            </td>`;
+        tbody.appendChild(tr);
+    });
+    refreshEventSelectors();
+}
+
+function deleteEvent(id) {
+    if (!confirm('¿Seguro que quieres eliminar este evento y todos sus datos?')) return;
+    appData.events = appData.events.filter(e => e.id !== id);
+    saveData(appData);
+    refreshEvents();
+}
+
+// ---- EVENT SELECTORS ----
+function refreshEventSelectors() {
+    const sel = document.getElementById('select-event-attendance');
+    const current = sel.value;
+    sel.innerHTML = '<option value="">-- Selecciona un evento --</option>';
+    appData.events.forEach(ev => {
+        sel.innerHTML += `<option value="${ev.id}">${esc(ev.name)} (${formatDate(ev.date)})</option>`;
+    });
+    sel.value = current;
+}
+
+// ---- ATTENDANCE ----
+document.getElementById('select-event-attendance').addEventListener('change', refreshAttendance);
+
+function getSelectedEvent() {
+    const id = document.getElementById('select-event-attendance').value;
+    return appData.events.find(e => e.id === id) || null;
+}
+
+function refreshAttendance() {
+    const event = getSelectedEvent();
+    const panel = document.getElementById('attendance-panel');
+    const statsCard = document.getElementById('attendance-stats-card');
+    const listCard = document.getElementById('attendees-list-card');
+
+    if (!event) {
+        panel.style.display = 'none';
+        statsCard.style.display = 'none';
+        listCard.style.display = 'none';
+        return;
+    }
+
+    panel.style.display = 'block';
+    statsCard.style.display = 'block';
+    listCard.style.display = 'block';
+
+    // Stats
+    const total = event.attendees.length;
+    const attended = event.attendees.filter(a => a.attended).length;
+    const notAttended = event.attendees.filter(a => a.attended === false).length;
+    const pending = event.attendees.filter(a => a.attended === null).length;
+    const pct = total > 0 ? Math.round((attended / total) * 100) : 0;
+    const bought = event.attendees.filter(a => a.purchased).length;
+    const pctBought = attended > 0 ? Math.round((bought / attended) * 100) : 0;
+
+    document.getElementById('attendance-stats').innerHTML = `
+        <div class="stat-card"><div class="stat-value">${total}</div><div class="stat-label">Inscritos</div></div>
+        <div class="stat-card"><div class="stat-value">${attended}</div><div class="stat-label">Asistieron</div></div>
+        <div class="stat-card"><div class="stat-value">${notAttended}</div><div class="stat-label">No asistieron</div></div>
+        <div class="stat-card"><div class="stat-value">${pct}%</div><div class="stat-label">% Asistencia</div></div>
+    `;
+
+    const bar = document.getElementById('attendance-progress');
+    bar.style.width = pct + '%';
+    bar.textContent = pct + '%';
+
+    // Table
+    const tbody = document.getElementById('attendees-table-body');
+    const noAtt = document.getElementById('no-attendees');
+    tbody.innerHTML = '';
+
+    if (total === 0) {
+        noAtt.style.display = 'block';
+        return;
+    }
+    noAtt.style.display = 'none';
+
+    event.attendees.forEach((att, idx) => {
+        const attendanceBadge = att.attended === null
+            ? '<span class="badge badge-warning">Pendiente</span>'
+            : att.attended
+                ? '<span class="badge badge-success">Asistió</span>'
+                : '<span class="badge badge-danger">No asistió</span>';
+
+        const purchaseBadge = att.purchased
+            ? '<span class="badge badge-success">Sí</span>'
+            : '<span class="badge badge-danger">No</span>';
+
+        const productTags = (att.products || []).map(p => `<span class="product-tag">${esc(p)}</span>`).join('');
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><strong>${esc(att.name)}</strong></td>
+            <td>${attendanceBadge}</td>
+            <td>${purchaseBadge}</td>
+            <td><div class="product-tags">${productTags || '<span style="color:#bbb">—</span>'}</div></td>
+            <td class="actions">
+                ${att.attended !== true ? `<button class="btn btn-sm btn-success" onclick="markAttendance('${event.id}',${idx},true)">Asistió</button>` : ''}
+                ${att.attended !== false ? `<button class="btn btn-sm btn-danger" onclick="markAttendance('${event.id}',${idx},false)">No asistió</button>` : ''}
+                <button class="btn btn-sm btn-outline" onclick="openProductsModal('${event.id}',${idx})">Productos</button>
+                <button class="btn btn-sm btn-secondary" onclick="removeAttendee('${event.id}',${idx})">Quitar</button>
+            </td>`;
+        tbody.appendChild(tr);
+    });
+}
+
+document.getElementById('btn-add-attendee').addEventListener('click', () => {
+    const event = getSelectedEvent();
+    if (!event) return;
+    const name = document.getElementById('attendee-name').value.trim();
+    if (!name) return alert('Introduce el nombre de la persona.');
+
+    event.attendees.push({ name, attended: null, purchased: false, products: [] });
+    saveData(appData);
+    document.getElementById('attendee-name').value = '';
+    refreshAttendance();
+    refreshEvents();
+});
+
+function markAttendance(eventId, idx, value) {
+    const event = appData.events.find(e => e.id === eventId);
+    if (event) {
+        event.attendees[idx].attended = value;
+        saveData(appData);
+        refreshAttendance();
+        refreshEvents();
+    }
+}
+
+function removeAttendee(eventId, idx) {
+    if (!confirm('¿Quitar a esta persona del evento?')) return;
+    const event = appData.events.find(e => e.id === eventId);
+    if (event) {
+        event.attendees.splice(idx, 1);
+        saveData(appData);
+        refreshAttendance();
+        refreshEvents();
+    }
+}
+
+// ---- PRODUCTS MODAL ----
+let modalEventId = null;
+let modalAttIdx = null;
+
+function openProductsModal(eventId, idx) {
+    const event = appData.events.find(e => e.id === eventId);
+    if (!event) return;
+    const att = event.attendees[idx];
+    modalEventId = eventId;
+    modalAttIdx = idx;
+
+    document.getElementById('modal-attendee-name').textContent = att.name;
+
+    const list = document.getElementById('modal-products-list');
+    if (appData.products.length === 0) {
+        list.innerHTML = '<p style="color:#999;">No hay productos en el catálogo. Añade productos en la pestaña "Productos".</p>';
+    } else {
+        list.innerHTML = appData.products.map(p => {
+            const checked = (att.products || []).includes(p.name) ? 'checked' : '';
+            const priceStr = p.price ? ` (${Number(p.price).toFixed(2)} €)` : '';
+            return `<label style="display:block;padding:8px 0;border-bottom:1px solid #f0f0f0;cursor:pointer;">
+                <input type="checkbox" value="${esc(p.name)}" ${checked} style="margin-right:8px;">
+                ${esc(p.name)}${priceStr}
+            </label>`;
+        }).join('');
+    }
+
+    document.getElementById('modal-products').classList.add('active');
+}
+
+document.getElementById('btn-modal-close').addEventListener('click', () => {
+    document.getElementById('modal-products').classList.remove('active');
+});
+
+document.getElementById('btn-modal-save').addEventListener('click', () => {
+    const event = appData.events.find(e => e.id === modalEventId);
+    if (!event) return;
+    const att = event.attendees[modalAttIdx];
+
+    const checkboxes = document.querySelectorAll('#modal-products-list input[type=checkbox]');
+    const selected = [];
+    checkboxes.forEach(cb => { if (cb.checked) selected.push(cb.value); });
+
+    att.products = selected;
+    att.purchased = selected.length > 0;
+    saveData(appData);
+
+    document.getElementById('modal-products').classList.remove('active');
+    refreshAttendance();
+});
+
+// ---- PRODUCTS ----
+document.getElementById('btn-add-product').addEventListener('click', () => {
+    const name = document.getElementById('product-name').value.trim();
+    const price = document.getElementById('product-price').value;
+    if (!name) return alert('Introduce el nombre del producto.');
+
+    appData.products.push({ name, price: price || '' });
+    saveData(appData);
+    document.getElementById('product-name').value = '';
+    document.getElementById('product-price').value = '';
+    refreshProducts();
+});
+
+function refreshProducts() {
+    const tbody = document.getElementById('products-table-body');
+    const noP = document.getElementById('no-products');
+    tbody.innerHTML = '';
+
+    if (appData.products.length === 0) {
+        noP.style.display = 'block';
+        return;
+    }
+    noP.style.display = 'none';
+
+    appData.products.forEach((p, idx) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><strong>${esc(p.name)}</strong></td>
+            <td>${p.price ? Number(p.price).toFixed(2) + ' €' : '—'}</td>
+            <td class="actions">
+                <button class="btn btn-sm btn-danger" onclick="deleteProduct(${idx})">Eliminar</button>
+            </td>`;
+        tbody.appendChild(tr);
+    });
+}
+
+function deleteProduct(idx) {
+    if (!confirm('¿Eliminar este producto del catálogo?')) return;
+    appData.products.splice(idx, 1);
+    saveData(appData);
+    refreshProducts();
+}
+
+// ---- STATS ----
+function refreshStats() {
+    const totalEvents = appData.events.length;
+    let totalInscritos = 0, totalAsistieron = 0, totalCompraron = 0;
+
+    appData.events.forEach(ev => {
+        totalInscritos += ev.attendees.length;
+        totalAsistieron += ev.attendees.filter(a => a.attended).length;
+        totalCompraron += ev.attendees.filter(a => a.purchased).length;
+    });
+
+    const pctGlobal = totalInscritos > 0 ? Math.round((totalAsistieron / totalInscritos) * 100) : 0;
+    const pctCompra = totalAsistieron > 0 ? Math.round((totalCompraron / totalAsistieron) * 100) : 0;
+
+    document.getElementById('global-stats').innerHTML = `
+        <div class="stat-card"><div class="stat-value">${totalEvents}</div><div class="stat-label">Total Eventos</div></div>
+        <div class="stat-card"><div class="stat-value">${totalInscritos}</div><div class="stat-label">Total Inscritos</div></div>
+        <div class="stat-card"><div class="stat-value">${pctGlobal}%</div><div class="stat-label">Asistencia Global</div></div>
+        <div class="stat-card"><div class="stat-value">${pctCompra}%</div><div class="stat-label">Tasa de Compra</div></div>
+    `;
+
+    // Per-event table
+    const tbody = document.getElementById('stats-table-body');
+    tbody.innerHTML = '';
+    appData.events.forEach(ev => {
+        const total = ev.attendees.length;
+        const att = ev.attendees.filter(a => a.attended).length;
+        const pct = total > 0 ? Math.round((att / total) * 100) : 0;
+        const bought = ev.attendees.filter(a => a.purchased).length;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${esc(ev.name)}</td>
+            <td>${formatDate(ev.date)}</td>
+            <td>${total}</td>
+            <td>${att}</td>
+            <td>
+                <div class="progress-bar-container" style="height:18px;width:100px;display:inline-block;vertical-align:middle;">
+                    <div class="progress-bar-fill" style="width:${pct}%">${pct}%</div>
+                </div>
+            </td>
+            <td>${bought}</td>`;
+        tbody.appendChild(tr);
+    });
+
+    // Top products
+    const productCount = {};
+    appData.events.forEach(ev => {
+        ev.attendees.forEach(a => {
+            (a.products || []).forEach(p => {
+                productCount[p] = (productCount[p] || 0) + 1;
+            });
+        });
+    });
+    const sorted = Object.entries(productCount).sort((a, b) => b[1] - a[1]);
+    const tpBody = document.getElementById('top-products-body');
+    const noPS = document.getElementById('no-products-stats');
+    tpBody.innerHTML = '';
+
+    if (sorted.length === 0) {
+        noPS.style.display = 'block';
+    } else {
+        noPS.style.display = 'none';
+        sorted.forEach(([name, count]) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${esc(name)}</td><td><strong>${count}</strong></td>`;
+            tpBody.appendChild(tr);
+        });
+    }
+}
+
+// ---- UTILS ----
+function esc(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+function formatDate(dateStr) {
+    const [y, m, d] = dateStr.split('-');
+    return `${d}/${m}/${y}`;
+}
+
+// ---- INIT ----
+refreshEvents();
+refreshProducts();
+</script>
+
+</body>
+</html>
