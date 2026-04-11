@@ -1,0 +1,1 @@
+Nothing needs to be added to the .gitignore file since only a single HTML file (walkman_app.html) was added, which is a source code file and not a build artifact, dependency, or temporary file.
