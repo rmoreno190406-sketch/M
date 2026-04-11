@@ -166,6 +166,26 @@
             transform: scaleX(0.9);
         }
 
+        .song-title-overlay {
+            position: absolute;
+            top: 10px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            padding: 5px;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 5px;
+            margin: 0 10px;
+            z-index: 3;
+            text-shadow: 1px 1px 2px #000;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
         .message-overlay {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -204,6 +224,7 @@
                 <div class="reel" id="reel-left"></div>
                 <div class="reel" id="reel-right"></div>
             </div>
+            <div class="song-title-overlay" id="songTitleDisplay">NO TAPE</div>
         </div>
 
         <!-- Controles -->
@@ -245,6 +266,7 @@
         const overlay = document.getElementById('start-overlay');
         const fileInput = document.getElementById('file-input');
         const audioInput = document.getElementById('audio-input');
+        const songTitleDisplay = document.getElementById('songTitleDisplay');
 
         let isPlaying = false;
         let isPowered = false;
@@ -327,6 +349,9 @@
             if (file) {
                 const url = URL.createObjectURL(file);
                 audio.src = url;
+                // Extraer nombre del archivo sin extensión
+                const fileName = file.name.replace(/\.[^/.]+$/, "");
+                songTitleDisplay.innerText = fileName;
                 stateDisplay.innerText = "TAPE LOADED";
                 playClickSound();
             }
@@ -368,6 +393,7 @@
             audio.currentTime = 0;
             isPlaying = false;
             stateDisplay.innerText = "STOP";
+            songTitleDisplay.innerText = audio.src ? "READY" : "NO TAPE";
             reelLeft.style.animation = 'none';
             reelRight.style.animation = 'none';
             coverImg.classList.remove('distorted');
@@ -399,6 +425,7 @@
                 coverImg.classList.remove('distorted');
                 if (isPlaying) stateDisplay.innerText = "PLAY";
                 else stateDisplay.innerText = "STOP";
+                songTitleDisplay.innerText = audio.src ? file.name.replace(/\.[^/.]+$/, "") : "NO TAPE";
             };
         });
 
@@ -416,6 +443,7 @@
                 clearInterval(fastForwardInterval);
                 if (isPlaying) stateDisplay.innerText = "PLAY";
                 else stateDisplay.innerText = "STOP";
+                songTitleDisplay.innerText = audio.src ? file.name.replace(/\.[^/.]+$/, "") : "NO TAPE";
             };
         });
 
