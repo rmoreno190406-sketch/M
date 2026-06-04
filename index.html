@@ -2393,12 +2393,15 @@ function refreshHistorial() {
         { key: 'nuevo', icon: '🆕', label: 'Nuevo', color: '#6366f1', bg: '#eef2ff', border: '#c7d2fe' },
         { key: 'no_compra', icon: '🛒', label: 'No compra', color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe' }
     ];
-    segCards.innerHTML = segDefs.map(s => `
-        <div onclick="setHistorialFilter('${s.key}')" style="cursor:pointer;background:${s.bg};border:1.5px solid ${s.border};border-radius:10px;padding:14px 16px;text-align:center;transition:transform 0.15s,box-shadow 0.15s;${historialFilter === s.key ? 'box-shadow:0 0 0 2px ' + s.color + ';transform:scale(1.03);' : ''}" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='${historialFilter === s.key ? 'scale(1.03)' : 'scale(1)}'">
-            <div style="font-size:1.5rem;">${s.icon}</div>
-            <div style="font-size:1.2rem;font-weight:700;color:${s.color};margin-top:2px;">${segCounts[s.key]}</div>
-            <div style="font-size:0.75rem;font-weight:600;color:${s.color};opacity:0.8;">${s.label}</div>
-        </div>`).join('');
+    segCards.innerHTML = segDefs.map(s => {
+        const isActive = historialFilter === s.key;
+        const activeStyle = isActive ? 'box-shadow:0 0 0 2px ' + s.color + ';transform:scale(1.03);' : '';
+        return '<div onclick="setHistorialFilter(\'' + s.key + '\')" style="cursor:pointer;background:' + s.bg + ';border:1.5px solid ' + s.border + ';border-radius:10px;padding:14px 16px;text-align:center;transition:transform 0.15s,box-shadow 0.15s;' + activeStyle + '">' +
+            '<div style="font-size:1.5rem;">' + s.icon + '</div>' +
+            '<div style="font-size:1.2rem;font-weight:700;color:' + s.color + ';margin-top:2px;">' + segCounts[s.key] + '</div>' +
+            '<div style="font-size:0.75rem;font-weight:600;color:' + s.color + ';opacity:0.8;">' + s.label + '</div>' +
+        '</div>';
+    }).join('');
 
     if (search) {
         persons = persons.filter(p =>
