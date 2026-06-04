@@ -938,6 +938,8 @@
                     <button onclick="setHistorialFilter('riesgo')" class="hist-chip" data-filter="riesgo" style="padding:6px 14px;border-radius:20px;border:1px solid #e0e0ea;background:white;color:#666;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;">⚠️ En riesgo</button>
                     <button onclick="setHistorialFilter('perdido')" class="hist-chip" data-filter="perdido" style="padding:6px 14px;border-radius:20px;border:1px solid #e0e0ea;background:white;color:#666;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;">🔴 Perdido</button>
                     <button onclick="setHistorialFilter('nuevo')" class="hist-chip" data-filter="nuevo" style="padding:6px 14px;border-radius:20px;border:1px solid #e0e0ea;background:white;color:#666;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;">🆕 Nuevo</button>
+                    <button onclick="setHistorialFilter('irregular')" class="hist-chip" data-filter="irregular" style="padding:6px 14px;border-radius:20px;border:1px solid #e0e0ea;background:white;color:#666;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;">📉 Irregular</button>
+                    <button onclick="setHistorialFilter('no_compra')" class="hist-chip" data-filter="no_compra" style="padding:6px 14px;border-radius:20px;border:1px solid #e0e0ea;background:white;color:#666;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;">🛒 No compra</button>
                 </div>
             </div>
 
@@ -2258,6 +2260,9 @@ function calcSegment(person, totalEvents) {
 
     let segment, segIcon, segColor, segBg, priority, prioIcon, prioColor;
 
+    const inscritoCount = person.inscrito.length;
+    const attRate = inscritoCount > 0 ? freq / inscritoCount : 0;
+
     if (freq === 0) {
         segment = 'nuevo'; segIcon = '🆕'; segColor = '#6366f1'; segBg = '#eef2ff';
         priority = 'Media'; prioIcon = '📞'; prioColor = '#f59e0b';
@@ -2276,6 +2281,16 @@ function calcSegment(person, totalEvents) {
     } else {
         segment = 'nuevo'; segIcon = '🆕'; segColor = '#6366f1'; segBg = '#eef2ff';
         priority = 'Media'; prioIcon = '📞'; prioColor = '#f59e0b';
+    }
+
+    if (freq >= 1 && purchases === 0 && segment !== 'perdido') {
+        segment = 'no_compra'; segIcon = '🛒'; segColor = '#7c3aed'; segBg = '#f5f3ff';
+        priority = 'Alta'; prioIcon = '📱'; prioColor = '#f59e0b';
+    }
+
+    if (inscritoCount >= 2 && attRate < 0.4 && segment !== 'perdido' && segment !== 'no_compra') {
+        segment = 'irregular'; segIcon = '📉'; segColor = '#64748b'; segBg = '#f1f5f9';
+        priority = 'Alta'; prioIcon = '📱'; prioColor = '#f59e0b';
     }
 
     return { segment, segIcon, segColor, segBg, priority, prioIcon, prioColor, score, daysSinceLast, recency, frequency, monetary };
@@ -2330,7 +2345,7 @@ function refreshHistorial() {
     });
 
     // Segment summary cards
-    const segCounts = { vip: 0, fiel: 0, riesgo: 0, perdido: 0, nuevo: 0 };
+    const segCounts = { vip: 0, fiel: 0, riesgo: 0, perdido: 0, nuevo: 0, irregular: 0, no_compra: 0 };
     persons.forEach(p => { if (segCounts[p.seg.segment] !== undefined) segCounts[p.seg.segment]++; });
     const segCards = document.getElementById('historial-segment-cards');
     const segDefs = [
@@ -2338,7 +2353,9 @@ function refreshHistorial() {
         { key: 'fiel', icon: '💚', label: 'Fiel', color: '#166534', bg: '#dcfce7', border: '#bbf7d0' },
         { key: 'riesgo', icon: '⚠️', label: 'En riesgo', color: '#92400e', bg: '#fef3c7', border: '#fde68a' },
         { key: 'perdido', icon: '🔴', label: 'Perdido', color: '#991b1b', bg: '#fef2f2', border: '#fecaca' },
-        { key: 'nuevo', icon: '🆕', label: 'Nuevo', color: '#6366f1', bg: '#eef2ff', border: '#c7d2fe' }
+        { key: 'nuevo', icon: '🆕', label: 'Nuevo', color: '#6366f1', bg: '#eef2ff', border: '#c7d2fe' },
+        { key: 'irregular', icon: '📉', label: 'Irregular', color: '#64748b', bg: '#f1f5f9', border: '#cbd5e1' },
+        { key: 'no_compra', icon: '🛒', label: 'No compra', color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe' }
     ];
     segCards.innerHTML = segDefs.map(s => `
         <div onclick="setHistorialFilter('${s.key}')" style="cursor:pointer;background:${s.bg};border:1.5px solid ${s.border};border-radius:10px;padding:14px 16px;text-align:center;transition:transform 0.15s,box-shadow 0.15s;${historialFilter === s.key ? 'box-shadow:0 0 0 2px ' + s.color + ';transform:scale(1.03);' : ''}" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='${historialFilter === s.key ? 'scale(1.03)' : 'scale(1)}'">
@@ -2406,7 +2423,7 @@ function refreshHistorial() {
             <td style="color:#555;">${p.phone ? esc(p.phone) : '<span style="color:#ccc;font-style:italic;">Sin teléfono</span>'}</td>
             <td>
                 <span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;background:${s.segBg};color:${s.segColor};font-size:0.78rem;font-weight:600;">
-                    ${s.segIcon} ${s.segment === 'vip' ? 'VIP' : s.segment === 'fiel' ? 'Fiel' : s.segment === 'riesgo' ? 'En riesgo' : s.segment === 'perdido' ? 'Perdido' : 'Nuevo'}
+                    ${s.segIcon} ${{vip:'VIP',fiel:'Fiel',riesgo:'En riesgo',perdido:'Perdido',nuevo:'Nuevo',irregular:'Irregular',no_compra:'No compra'}[s.segment] || s.segment}
                 </span>
             </td>
             <td>
