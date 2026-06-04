@@ -1638,10 +1638,16 @@ function renderModalProducts() {
                     </div>
                     <button type="button" onclick="removeModalLine(${i})" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:1rem;padding:4px;" title="Quitar">&times;</button>
                 </div>
-                <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap;">
                     <span style="font-size:0.72rem;color:#888;font-weight:600;">Dto:</span>
-                    <div style="display:flex;gap:3px;">
+                    <div style="display:flex;gap:3px;align-items:center;">
                         ${[0,5,10,15,20,25].map(d => `<button type="button" onclick="setLineDiscount(${i},${d})" style="padding:2px 7px;border:1px solid ${line.discount === d ? '#5B5FC7' : '#e0e0ea'};border-radius:4px;background:${line.discount === d ? '#eeedff' : '#f8f9fa'};color:${line.discount === d ? '#5B5FC7' : '#999'};font-size:0.72rem;font-weight:600;cursor:pointer;font-family:inherit;">${d}%</button>`).join('')}
+                        <div style="display:flex;align-items:center;gap:2px;margin-left:4px;">
+                            <input type="number" id="custom-disc-${i}" value="${![0,5,10,15,20,25].includes(line.discount) ? line.discount : ''}" min="0" max="100" step="1" placeholder="Otro"
+                                style="width:42px;padding:2px 4px;border:1px solid ${![0,5,10,15,20,25].includes(line.discount) ? '#5B5FC7' : '#e0e0ea'};border-radius:4px;font-size:0.72rem;font-family:inherit;text-align:center;background:${![0,5,10,15,20,25].includes(line.discount) ? '#eeedff' : '#f8f9fa'};color:${![0,5,10,15,20,25].includes(line.discount) ? '#5B5FC7' : '#999'};outline:none;"
+                                onchange="setCustomDiscount(${i},this.value)" onkeydown="if(event.key==='Enter'){setCustomDiscount(${i},this.value);event.preventDefault();}">
+                            <span style="font-size:0.72rem;color:#888;font-weight:600;">%</span>
+                        </div>
                     </div>
                     ${price > 0 ? `<span style="font-size:0.78rem;color:#5B5FC7;font-weight:600;margin-left:auto;">${lineFinal.toFixed(2)} &euro;</span>` : ''}
                 </div>
@@ -1662,6 +1668,13 @@ function removeModalLine(idx) {
 }
 
 function setLineDiscount(idx, pct) {
+    modalProductLines[idx].discount = pct;
+    renderModalProducts();
+}
+
+function setCustomDiscount(idx, val) {
+    const pct = parseInt(val);
+    if (isNaN(pct) || pct < 0 || pct > 100) return;
     modalProductLines[idx].discount = pct;
     renderModalProducts();
 }
@@ -1785,7 +1798,19 @@ function refreshProducts() {
                 </div>
             </td>
             <td style="color:#666;font-size:0.85rem;">${p.cn ? esc(p.cn) : '—'}</td>
-            <td><strong>${p.price ? Number(p.price).toFixed(2) + ' €' : '—'}</strong></td>
+            <td>
+                <span id="price-display-${idx}" onclick="startEditPrice(${idx})" style="cursor:pointer;" title="Haz clic para editar el precio">
+                    <strong>${p.price ? Number(p.price).toFixed(2) + ' €' : '—'}</strong>
+                    <span style="color:#bbb;font-size:0.75rem;margin-left:4px;">✏️</span>
+                </span>
+                <div id="price-edit-${idx}" style="display:none;align-items:center;gap:4px;">
+                    <input type="number" id="price-input-${idx}" value="${p.price ? Number(p.price).toFixed(2) : ''}" step="0.01" min="0" placeholder="0.00"
+                        style="width:80px;padding:4px 6px;border:1.5px solid #5B5FC7;border-radius:6px;font-size:0.85rem;font-family:inherit;outline:none;"
+                        onkeydown="if(event.key==='Enter')saveProductPrice(${idx});if(event.key==='Escape')cancelEditPrice(${idx});">
+                    <button onclick="saveProductPrice(${idx})" style="background:#5B5FC7;color:white;border:none;border-radius:5px;padding:4px 8px;cursor:pointer;font-size:0.78rem;font-weight:600;">✓</button>
+                    <button onclick="cancelEditPrice(${idx})" style="background:#f4f5fa;color:#666;border:1px solid #e0e0ea;border-radius:5px;padding:4px 8px;cursor:pointer;font-size:0.78rem;font-weight:600;">✗</button>
+                </div>
+            </td>
             <td>
                 <button onclick="deleteProduct(${idx})"
                     style="background:none;border:none;cursor:pointer;color:#ccc;font-size:1.1rem;padding:4px 8px;border-radius:4px;transition:color 0.15s;"
@@ -1800,6 +1825,35 @@ function deleteProduct(idx) {
     appData.products.splice(idx, 1);
     saveData(appData);
     refreshProducts();
+}
+
+function startEditPrice(idx) {
+    document.getElementById('price-display-' + idx).style.display = 'none';
+    document.getElementById('price-edit-' + idx).style.display = 'flex';
+    const input = document.getElementById('price-input-' + idx);
+    input.focus();
+    input.select();
+}
+
+function cancelEditPrice(idx) {
+    document.getElementById('price-display-' + idx).style.display = '';
+    document.getElementById('price-edit-' + idx).style.display = 'none';
+}
+
+function saveProductPrice(idx) {
+    const input = document.getElementById('price-input-' + idx);
+    const val = parseFloat(input.value);
+    if (isNaN(val) || val < 0) {
+        alert('Por favor, introduce un precio válido.');
+        return;
+    }
+    appData.products[idx].price = val;
+    saveData(appData);
+    refreshProducts();
+    if (selectedEventId !== null) {
+        refreshAttendance();
+    }
+    refreshStats();
 }
 
 // ---- STATS (Fix 1: exclude en preparación, Fix 5: ver todos, Fix 6: charts) ----
