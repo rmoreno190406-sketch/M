@@ -917,16 +917,28 @@
             <div class="phones-header">
                 <div>
                     <h2>Historial de Asistencia</h2>
-                    <p>Consulta cuántas veces ha asistido cada persona a los eventos.</p>
+                    <p>Segmentación de clientes por recencia, frecuencia y compras. Prioridad de llamada automática.</p>
                 </div>
             </div>
 
-            <div style="margin-bottom:16px;position:relative;">
-                <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#bbb;">🔍</span>
-                <input type="text" id="historial-search"
-                    placeholder="Buscar por nombre o teléfono..."
-                    style="width:100%;padding:10px 14px 10px 40px;border:1px solid #e0e0ea;border-radius:8px;font-size:0.88rem;font-family:inherit;outline:none;background:white;"
-                    oninput="refreshHistorial()">
+            <div id="historial-segment-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px;"></div>
+
+            <div style="display:flex;gap:10px;margin-bottom:16px;align-items:center;flex-wrap:wrap;">
+                <div style="flex:1;min-width:200px;position:relative;">
+                    <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#bbb;">🔍</span>
+                    <input type="text" id="historial-search"
+                        placeholder="Buscar por nombre o teléfono..."
+                        style="width:100%;padding:10px 14px 10px 40px;border:1px solid #e0e0ea;border-radius:8px;font-size:0.88rem;font-family:inherit;outline:none;background:white;"
+                        oninput="refreshHistorial()">
+                </div>
+                <div style="display:flex;gap:4px;flex-wrap:wrap;" id="historial-filter-chips">
+                    <button onclick="setHistorialFilter('todos')" class="hist-chip hist-chip-active" data-filter="todos" style="padding:6px 14px;border-radius:20px;border:1px solid #e0e0ea;background:#5B5FC7;color:white;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;">Todos</button>
+                    <button onclick="setHistorialFilter('vip')" class="hist-chip" data-filter="vip" style="padding:6px 14px;border-radius:20px;border:1px solid #e0e0ea;background:white;color:#666;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;">⭐ VIP</button>
+                    <button onclick="setHistorialFilter('fiel')" class="hist-chip" data-filter="fiel" style="padding:6px 14px;border-radius:20px;border:1px solid #e0e0ea;background:white;color:#666;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;">💚 Fiel</button>
+                    <button onclick="setHistorialFilter('riesgo')" class="hist-chip" data-filter="riesgo" style="padding:6px 14px;border-radius:20px;border:1px solid #e0e0ea;background:white;color:#666;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;">⚠️ En riesgo</button>
+                    <button onclick="setHistorialFilter('perdido')" class="hist-chip" data-filter="perdido" style="padding:6px 14px;border-radius:20px;border:1px solid #e0e0ea;background:white;color:#666;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;">🔴 Perdido</button>
+                    <button onclick="setHistorialFilter('nuevo')" class="hist-chip" data-filter="nuevo" style="padding:6px 14px;border-radius:20px;border:1px solid #e0e0ea;background:white;color:#666;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;">🆕 Nuevo</button>
+                </div>
             </div>
 
             <div class="card" style="padding:0;">
@@ -936,8 +948,11 @@
                             <tr>
                                 <th>Persona</th>
                                 <th>Teléfono</th>
+                                <th>Segmento</th>
+                                <th>Prioridad</th>
                                 <th>Asistencias</th>
-                                <th>Eventos Inscritos</th>
+                                <th>Compras</th>
+                                <th>Última visita</th>
                                 <th>Detalle</th>
                             </tr>
                         </thead>
@@ -2213,6 +2228,59 @@ function editPhone(name) {
 }
 
 // ---- HISTORIAL DE ASISTENCIA ----
+let historialFilter = 'todos';
+
+function setHistorialFilter(filter) {
+    historialFilter = filter;
+    document.querySelectorAll('.hist-chip').forEach(btn => {
+        const isActive = btn.dataset.filter === filter;
+        btn.style.background = isActive ? '#5B5FC7' : 'white';
+        btn.style.color = isActive ? 'white' : '#666';
+    });
+    refreshHistorial();
+}
+
+function calcSegment(person, totalEvents) {
+    const now = new Date();
+    const daysSinceLast = person.lastDate ? Math.floor((now - new Date(person.lastDate)) / 86400000) : 999;
+    const freq = person.asistido.length;
+    const purchases = person.totalProducts;
+    const totalEv = Math.max(totalEvents, 1);
+
+    // Recency score (0-100): lower days = higher score
+    const recency = daysSinceLast <= 30 ? 100 : daysSinceLast <= 90 ? 75 : daysSinceLast <= 180 ? 50 : daysSinceLast <= 365 ? 25 : 0;
+    // Frequency score (0-100)
+    const frequency = Math.min(100, Math.round((freq / totalEv) * 100));
+    // Monetary score (0-100)
+    const monetary = purchases >= 10 ? 100 : purchases >= 5 ? 75 : purchases >= 3 ? 50 : purchases >= 1 ? 25 : 0;
+
+    const score = Math.round(recency * 0.4 + frequency * 0.3 + monetary * 0.3);
+
+    let segment, segIcon, segColor, segBg, priority, prioIcon, prioColor;
+
+    if (freq === 0) {
+        segment = 'nuevo'; segIcon = '🆕'; segColor = '#6366f1'; segBg = '#eef2ff';
+        priority = 'Media'; prioIcon = '📞'; prioColor = '#f59e0b';
+    } else if (recency >= 75 && frequency >= 60 && monetary >= 50) {
+        segment = 'vip'; segIcon = '⭐'; segColor = '#b45309'; segBg = '#fffbeb';
+        priority = 'Baja'; prioIcon = '✅'; prioColor = '#22c55e';
+    } else if (recency >= 50 && frequency >= 40) {
+        segment = 'fiel'; segIcon = '💚'; segColor = '#166534'; segBg = '#dcfce7';
+        priority = 'Baja'; prioIcon = '✅'; prioColor = '#22c55e';
+    } else if (recency <= 25 && freq >= 2) {
+        segment = 'perdido'; segIcon = '🔴'; segColor = '#991b1b'; segBg = '#fef2f2';
+        priority = 'Urgente'; prioIcon = '🔥'; prioColor = '#dc2626';
+    } else if (recency <= 50 && freq >= 1) {
+        segment = 'riesgo'; segIcon = '⚠️'; segColor = '#92400e'; segBg = '#fef3c7';
+        priority = 'Alta'; prioIcon = '📱'; prioColor = '#f59e0b';
+    } else {
+        segment = 'nuevo'; segIcon = '🆕'; segColor = '#6366f1'; segBg = '#eef2ff';
+        priority = 'Media'; prioIcon = '📞'; prioColor = '#f59e0b';
+    }
+
+    return { segment, segIcon, segColor, segBg, priority, prioIcon, prioColor, score, daysSinceLast, recency, frequency, monetary };
+}
+
 function refreshHistorial() {
     const search = document.getElementById('historial-search').value.trim().toLowerCase();
     const tbody = document.getElementById('historial-table-body');
@@ -2220,6 +2288,8 @@ function refreshHistorial() {
     tbody.innerHTML = '';
 
     const personMap = {};
+    const eventsByDate = appData.events.slice().sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+
     appData.events.forEach(ev => {
         ev.attendees.forEach(att => {
             const key = (att.name || '').trim().toLowerCase() + '||' + (att.phone || '').trim();
@@ -2228,25 +2298,68 @@ function refreshHistorial() {
                     name: att.name,
                     phone: att.phone || '',
                     inscrito: [],
-                    asistido: []
+                    asistido: [],
+                    lastDate: null,
+                    totalProducts: 0,
+                    totalSpent: 0
                 };
             }
             personMap[key].inscrito.push(ev.name);
             if (att.attended === true) {
                 personMap[key].asistido.push(ev.name);
+                if (!personMap[key].lastDate || (ev.date && ev.date > personMap[key].lastDate)) {
+                    personMap[key].lastDate = ev.date;
+                }
             }
+            const prods = getProductItems(att.products);
+            prods.forEach(item => {
+                personMap[key].totalProducts += item.qty;
+                const prod = appData.products.find(p => p.name === item.name);
+                const price = prod && prod.price ? Number(prod.price) : 0;
+                const lineTotal = price * item.qty;
+                personMap[key].totalSpent += lineTotal - (lineTotal * ((item.discount || 0) / 100));
+            });
             if (att.phone && !personMap[key].phone) personMap[key].phone = att.phone;
         });
     });
 
+    const totalEvents = appData.events.length;
     let persons = Object.values(personMap);
+    persons.forEach(p => {
+        p.seg = calcSegment(p, totalEvents);
+    });
+
+    // Segment summary cards
+    const segCounts = { vip: 0, fiel: 0, riesgo: 0, perdido: 0, nuevo: 0 };
+    persons.forEach(p => { if (segCounts[p.seg.segment] !== undefined) segCounts[p.seg.segment]++; });
+    const segCards = document.getElementById('historial-segment-cards');
+    const segDefs = [
+        { key: 'vip', icon: '⭐', label: 'VIP', color: '#b45309', bg: '#fffbeb', border: '#fde68a' },
+        { key: 'fiel', icon: '💚', label: 'Fiel', color: '#166534', bg: '#dcfce7', border: '#bbf7d0' },
+        { key: 'riesgo', icon: '⚠️', label: 'En riesgo', color: '#92400e', bg: '#fef3c7', border: '#fde68a' },
+        { key: 'perdido', icon: '🔴', label: 'Perdido', color: '#991b1b', bg: '#fef2f2', border: '#fecaca' },
+        { key: 'nuevo', icon: '🆕', label: 'Nuevo', color: '#6366f1', bg: '#eef2ff', border: '#c7d2fe' }
+    ];
+    segCards.innerHTML = segDefs.map(s => `
+        <div onclick="setHistorialFilter('${s.key}')" style="cursor:pointer;background:${s.bg};border:1.5px solid ${s.border};border-radius:10px;padding:14px 16px;text-align:center;transition:transform 0.15s,box-shadow 0.15s;${historialFilter === s.key ? 'box-shadow:0 0 0 2px ' + s.color + ';transform:scale(1.03);' : ''}" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='${historialFilter === s.key ? 'scale(1.03)' : 'scale(1)}'">
+            <div style="font-size:1.5rem;">${s.icon}</div>
+            <div style="font-size:1.2rem;font-weight:700;color:${s.color};margin-top:2px;">${segCounts[s.key]}</div>
+            <div style="font-size:0.75rem;font-weight:600;color:${s.color};opacity:0.8;">${s.label}</div>
+        </div>`).join('');
+
     if (search) {
         persons = persons.filter(p =>
             p.name.toLowerCase().includes(search) ||
             p.phone.toLowerCase().includes(search)
         );
     }
-    persons.sort((a, b) => b.asistido.length - a.asistido.length || a.name.localeCompare(b.name));
+    if (historialFilter !== 'todos') {
+        persons = persons.filter(p => p.seg.segment === historialFilter);
+    }
+
+    // Sort: highest priority first (urgente > alta > media > baja), then by score descending
+    const prioOrder = { 'Urgente': 0, 'Alta': 1, 'Media': 2, 'Baja': 3 };
+    persons.sort((a, b) => (prioOrder[a.seg.priority] || 9) - (prioOrder[b.seg.priority] || 9) || b.seg.score - a.seg.score);
 
     if (persons.length === 0) {
         noHist.style.display = 'block';
@@ -2257,8 +2370,25 @@ function refreshHistorial() {
     persons.forEach((p, idx) => {
         const initials = p.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
         const aColor = avatarColors[idx % avatarColors.length];
+        const s = p.seg;
         const pct = p.inscrito.length > 0 ? Math.round((p.asistido.length / p.inscrito.length) * 100) : 0;
         const barColor = pct >= 75 ? '#22c55e' : pct >= 50 ? '#f59e0b' : '#ef4444';
+
+        let lastVisitText;
+        if (!p.lastDate) {
+            lastVisitText = '<span style="color:#ccc;font-style:italic;">Nunca</span>';
+        } else if (s.daysSinceLast === 0) {
+            lastVisitText = 'Hoy';
+        } else if (s.daysSinceLast === 1) {
+            lastVisitText = 'Ayer';
+        } else if (s.daysSinceLast <= 30) {
+            lastVisitText = 'Hace ' + s.daysSinceLast + ' días';
+        } else if (s.daysSinceLast <= 365) {
+            const months = Math.floor(s.daysSinceLast / 30);
+            lastVisitText = 'Hace ' + months + (months === 1 ? ' mes' : ' meses');
+        } else {
+            lastVisitText = 'Hace más de 1 año';
+        }
 
         const eventDetails = p.inscrito.map(evName => {
             const asistio = p.asistido.includes(evName);
@@ -2275,16 +2405,30 @@ function refreshHistorial() {
             </td>
             <td style="color:#555;">${p.phone ? esc(p.phone) : '<span style="color:#ccc;font-style:italic;">Sin teléfono</span>'}</td>
             <td>
+                <span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;background:${s.segBg};color:${s.segColor};font-size:0.78rem;font-weight:600;">
+                    ${s.segIcon} ${s.segment === 'vip' ? 'VIP' : s.segment === 'fiel' ? 'Fiel' : s.segment === 'riesgo' ? 'En riesgo' : s.segment === 'perdido' ? 'Perdido' : 'Nuevo'}
+                </span>
+            </td>
+            <td>
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <span style="font-size:0.95rem;">${s.prioIcon}</span>
+                    <span style="font-size:0.8rem;font-weight:700;color:${s.prioColor};">${s.priority}</span>
+                </div>
+            </td>
+            <td>
                 <div style="display:flex;align-items:center;gap:8px;">
                     <strong style="font-size:1rem;color:#222;">${p.asistido.length}</strong>
                     <span style="font-size:0.78rem;color:#888;">de ${p.inscrito.length}</span>
-                    <div style="flex:1;max-width:80px;height:6px;background:#f0f0f5;border-radius:3px;overflow:hidden;">
-                        <div style="width:${pct}%;height:100%;background:${barColor};border-radius:3px;transition:width 0.3s;"></div>
+                    <div style="flex:1;max-width:60px;height:6px;background:#f0f0f5;border-radius:3px;overflow:hidden;">
+                        <div style="width:${pct}%;height:100%;background:${barColor};border-radius:3px;"></div>
                     </div>
-                    <span style="font-size:0.72rem;font-weight:600;color:${barColor};">${pct}%</span>
                 </div>
             </td>
-            <td style="font-size:0.85rem;color:#666;">${p.inscrito.length}</td>
+            <td>
+                <div style="font-size:0.85rem;color:#222;font-weight:600;">${p.totalProducts} uds</div>
+                <div style="font-size:0.73rem;color:#888;">${p.totalSpent.toFixed(2)} €</div>
+            </td>
+            <td style="font-size:0.82rem;color:#555;">${lastVisitText}</td>
             <td><div style="display:flex;flex-wrap:wrap;gap:2px;">${eventDetails}</div></td>`;
         tbody.appendChild(tr);
     });
