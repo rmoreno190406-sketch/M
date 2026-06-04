@@ -933,12 +933,11 @@
                 </div>
                 <div style="display:flex;gap:4px;flex-wrap:wrap;" id="historial-filter-chips">
                     <button onclick="setHistorialFilter('todos')" class="hist-chip hist-chip-active" data-filter="todos" style="padding:6px 14px;border-radius:20px;border:1px solid #e0e0ea;background:#5B5FC7;color:white;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;">Todos</button>
-                    <button onclick="setHistorialFilter('vip')" class="hist-chip" data-filter="vip" style="padding:6px 14px;border-radius:20px;border:1px solid #e0e0ea;background:white;color:#666;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;">⭐ VIP</button>
-                    <button onclick="setHistorialFilter('fiel')" class="hist-chip" data-filter="fiel" style="padding:6px 14px;border-radius:20px;border:1px solid #e0e0ea;background:white;color:#666;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;">💚 Fiel</button>
-                    <button onclick="setHistorialFilter('riesgo')" class="hist-chip" data-filter="riesgo" style="padding:6px 14px;border-radius:20px;border:1px solid #e0e0ea;background:white;color:#666;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;">⚠️ En riesgo</button>
-                    <button onclick="setHistorialFilter('perdido')" class="hist-chip" data-filter="perdido" style="padding:6px 14px;border-radius:20px;border:1px solid #e0e0ea;background:white;color:#666;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;">🔴 Perdido</button>
+                    <button onclick="setHistorialFilter('siempre')" class="hist-chip" data-filter="siempre" style="padding:6px 14px;border-radius:20px;border:1px solid #e0e0ea;background:white;color:#666;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;">⭐ Asiste siempre</button>
+                    <button onclick="setHistorialFilter('regular')" class="hist-chip" data-filter="regular" style="padding:6px 14px;border-radius:20px;border:1px solid #e0e0ea;background:white;color:#666;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;">💚 Asiste con regularidad</button>
+                    <button onclick="setHistorialFilter('poco')" class="hist-chip" data-filter="poco" style="padding:6px 14px;border-radius:20px;border:1px solid #e0e0ea;background:white;color:#666;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;">⚠️ Asiste poco</button>
+                    <button onclick="setHistorialFilter('no_asiste')" class="hist-chip" data-filter="no_asiste" style="padding:6px 14px;border-radius:20px;border:1px solid #e0e0ea;background:white;color:#666;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;">🔴 No asiste</button>
                     <button onclick="setHistorialFilter('nuevo')" class="hist-chip" data-filter="nuevo" style="padding:6px 14px;border-radius:20px;border:1px solid #e0e0ea;background:white;color:#666;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;">🆕 Nuevo</button>
-                    <button onclick="setHistorialFilter('irregular')" class="hist-chip" data-filter="irregular" style="padding:6px 14px;border-radius:20px;border:1px solid #e0e0ea;background:white;color:#666;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;">📉 Irregular</button>
                     <button onclick="setHistorialFilter('no_compra')" class="hist-chip" data-filter="no_compra" style="padding:6px 14px;border-radius:20px;border:1px solid #e0e0ea;background:white;color:#666;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;">🛒 No compra</button>
                 </div>
             </div>
@@ -2266,30 +2265,27 @@ function calcSegment(person, totalEvents) {
     if (freq === 0) {
         segment = 'nuevo'; segIcon = '🆕'; segColor = '#6366f1'; segBg = '#eef2ff';
         priority = 'Media'; prioIcon = '📞'; prioColor = '#f59e0b';
-    } else if (recency >= 75 && frequency >= 60 && monetary >= 50) {
-        segment = 'vip'; segIcon = '⭐'; segColor = '#b45309'; segBg = '#fffbeb';
+    } else if (attRate >= 0.9) {
+        segment = 'siempre'; segIcon = '⭐'; segColor = '#b45309'; segBg = '#fffbeb';
         priority = 'Baja'; prioIcon = '✅'; prioColor = '#22c55e';
-    } else if (recency >= 50 && frequency >= 40) {
-        segment = 'fiel'; segIcon = '💚'; segColor = '#166534'; segBg = '#dcfce7';
+    } else if (attRate >= 0.5) {
+        segment = 'regular'; segIcon = '💚'; segColor = '#166534'; segBg = '#dcfce7';
         priority = 'Baja'; prioIcon = '✅'; prioColor = '#22c55e';
-    } else if (recency <= 25 && freq >= 2) {
-        segment = 'perdido'; segIcon = '🔴'; segColor = '#991b1b'; segBg = '#fef2f2';
-        priority = 'Urgente'; prioIcon = '🔥'; prioColor = '#dc2626';
-    } else if (recency <= 50 && freq >= 1) {
-        segment = 'riesgo'; segIcon = '⚠️'; segColor = '#92400e'; segBg = '#fef3c7';
+    } else if (attRate > 0) {
+        segment = 'poco'; segIcon = '⚠️'; segColor = '#92400e'; segBg = '#fef3c7';
         priority = 'Alta'; prioIcon = '📱'; prioColor = '#f59e0b';
     } else {
-        segment = 'nuevo'; segIcon = '🆕'; segColor = '#6366f1'; segBg = '#eef2ff';
-        priority = 'Media'; prioIcon = '📞'; prioColor = '#f59e0b';
+        segment = 'no_asiste'; segIcon = '🔴'; segColor = '#991b1b'; segBg = '#fef2f2';
+        priority = 'Urgente'; prioIcon = '🔥'; prioColor = '#dc2626';
     }
 
-    if (freq >= 1 && purchases === 0 && segment !== 'perdido') {
+    if (inscritoCount >= 2 && freq === 0) {
+        segment = 'no_asiste'; segIcon = '🔴'; segColor = '#991b1b'; segBg = '#fef2f2';
+        priority = 'Urgente'; prioIcon = '🔥'; prioColor = '#dc2626';
+    }
+
+    if (freq >= 1 && purchases === 0 && segment !== 'no_asiste') {
         segment = 'no_compra'; segIcon = '🛒'; segColor = '#7c3aed'; segBg = '#f5f3ff';
-        priority = 'Alta'; prioIcon = '📱'; prioColor = '#f59e0b';
-    }
-
-    if (inscritoCount >= 2 && attRate < 0.4 && segment !== 'perdido' && segment !== 'no_compra') {
-        segment = 'irregular'; segIcon = '📉'; segColor = '#64748b'; segBg = '#f1f5f9';
         priority = 'Alta'; prioIcon = '📱'; prioColor = '#f59e0b';
     }
 
@@ -2345,16 +2341,15 @@ function refreshHistorial() {
     });
 
     // Segment summary cards
-    const segCounts = { vip: 0, fiel: 0, riesgo: 0, perdido: 0, nuevo: 0, irregular: 0, no_compra: 0 };
+    const segCounts = { siempre: 0, regular: 0, poco: 0, no_asiste: 0, nuevo: 0, no_compra: 0 };
     persons.forEach(p => { if (segCounts[p.seg.segment] !== undefined) segCounts[p.seg.segment]++; });
     const segCards = document.getElementById('historial-segment-cards');
     const segDefs = [
-        { key: 'vip', icon: '⭐', label: 'VIP', color: '#b45309', bg: '#fffbeb', border: '#fde68a' },
-        { key: 'fiel', icon: '💚', label: 'Fiel', color: '#166534', bg: '#dcfce7', border: '#bbf7d0' },
-        { key: 'riesgo', icon: '⚠️', label: 'En riesgo', color: '#92400e', bg: '#fef3c7', border: '#fde68a' },
-        { key: 'perdido', icon: '🔴', label: 'Perdido', color: '#991b1b', bg: '#fef2f2', border: '#fecaca' },
+        { key: 'siempre', icon: '⭐', label: 'Asiste siempre', color: '#b45309', bg: '#fffbeb', border: '#fde68a' },
+        { key: 'regular', icon: '💚', label: 'Con regularidad', color: '#166534', bg: '#dcfce7', border: '#bbf7d0' },
+        { key: 'poco', icon: '⚠️', label: 'Asiste poco', color: '#92400e', bg: '#fef3c7', border: '#fde68a' },
+        { key: 'no_asiste', icon: '🔴', label: 'No asiste', color: '#991b1b', bg: '#fef2f2', border: '#fecaca' },
         { key: 'nuevo', icon: '🆕', label: 'Nuevo', color: '#6366f1', bg: '#eef2ff', border: '#c7d2fe' },
-        { key: 'irregular', icon: '📉', label: 'Irregular', color: '#64748b', bg: '#f1f5f9', border: '#cbd5e1' },
         { key: 'no_compra', icon: '🛒', label: 'No compra', color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe' }
     ];
     segCards.innerHTML = segDefs.map(s => `
@@ -2423,7 +2418,7 @@ function refreshHistorial() {
             <td style="color:#555;">${p.phone ? esc(p.phone) : '<span style="color:#ccc;font-style:italic;">Sin teléfono</span>'}</td>
             <td>
                 <span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;background:${s.segBg};color:${s.segColor};font-size:0.78rem;font-weight:600;">
-                    ${s.segIcon} ${{vip:'VIP',fiel:'Fiel',riesgo:'En riesgo',perdido:'Perdido',nuevo:'Nuevo',irregular:'Irregular',no_compra:'No compra'}[s.segment] || s.segment}
+                    ${s.segIcon} ${{siempre:'Asiste siempre',regular:'Con regularidad',poco:'Asiste poco',no_asiste:'No asiste',nuevo:'Nuevo',no_compra:'No compra'}[s.segment] || s.segment}
                 </span>
             </td>
             <td>
