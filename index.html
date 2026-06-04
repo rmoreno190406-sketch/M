@@ -624,6 +624,9 @@
         <button class="nav-item" data-section="phones">
             <span class="nav-icon">📞</span> Teléfonos
         </button>
+        <button class="nav-item" data-section="historial">
+            <span class="nav-icon">🗓️</span> Historial
+        </button>
     </nav>
 </aside>
 
@@ -910,6 +913,41 @@
             </div>
         </div>
 
+        <div class="section-content" id="section-historial">
+            <div class="phones-header">
+                <div>
+                    <h2>Historial de Asistencia</h2>
+                    <p>Consulta cuántas veces ha asistido cada persona a los eventos.</p>
+                </div>
+            </div>
+
+            <div style="margin-bottom:16px;position:relative;">
+                <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#bbb;">🔍</span>
+                <input type="text" id="historial-search"
+                    placeholder="Buscar por nombre o teléfono..."
+                    style="width:100%;padding:10px 14px 10px 40px;border:1px solid #e0e0ea;border-radius:8px;font-size:0.88rem;font-family:inherit;outline:none;background:white;"
+                    oninput="refreshHistorial()">
+            </div>
+
+            <div class="card" style="padding:0;">
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Persona</th>
+                                <th>Teléfono</th>
+                                <th>Asistencias</th>
+                                <th>Eventos Inscritos</th>
+                                <th>Detalle</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historial-table-body"></tbody>
+                    </table>
+                </div>
+                <div class="empty-state" id="no-historial" style="display:none;">No hay datos de asistencia registrados.</div>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -1048,7 +1086,8 @@ const pageTitles = {
     attendance: 'Asistencia de Eventos',
     stats: 'Panel de Estadísticas',
     products: 'Catálogo de Productos',
-    phones: 'Directorio de Teléfonos'
+    phones: 'Directorio de Teléfonos',
+    historial: 'Historial de Asistencia'
 };
 
 document.querySelectorAll('.nav-item').forEach(btn => {
@@ -1062,6 +1101,7 @@ document.querySelectorAll('.nav-item').forEach(btn => {
         if (section === 'attendance') refreshAttendance();
         if (section === 'stats') refreshStats();
         if (section === 'phones') refreshPhones();
+        if (section === 'historial') refreshHistorial();
         document.getElementById('sidebar').classList.remove('open');
     });
 });
@@ -1080,6 +1120,7 @@ function navigateToSection(section) {
     if (section === 'attendance') refreshAttendance();
     if (section === 'stats') refreshStats();
     if (section === 'phones') refreshPhones();
+    if (section === 'historial') refreshHistorial();
 }
 
 // ---- EVENTS ----
@@ -2169,6 +2210,84 @@ function editPhone(name) {
     saveData(appData);
     refreshPhones();
     refreshAttendance();
+}
+
+// ---- HISTORIAL DE ASISTENCIA ----
+function refreshHistorial() {
+    const search = document.getElementById('historial-search').value.trim().toLowerCase();
+    const tbody = document.getElementById('historial-table-body');
+    const noHist = document.getElementById('no-historial');
+    tbody.innerHTML = '';
+
+    const personMap = {};
+    appData.events.forEach(ev => {
+        ev.attendees.forEach(att => {
+            const key = (att.name || '').trim().toLowerCase() + '||' + (att.phone || '').trim();
+            if (!personMap[key]) {
+                personMap[key] = {
+                    name: att.name,
+                    phone: att.phone || '',
+                    inscrito: [],
+                    asistido: []
+                };
+            }
+            personMap[key].inscrito.push(ev.name);
+            if (att.attended === true) {
+                personMap[key].asistido.push(ev.name);
+            }
+            if (att.phone && !personMap[key].phone) personMap[key].phone = att.phone;
+        });
+    });
+
+    let persons = Object.values(personMap);
+    if (search) {
+        persons = persons.filter(p =>
+            p.name.toLowerCase().includes(search) ||
+            p.phone.toLowerCase().includes(search)
+        );
+    }
+    persons.sort((a, b) => b.asistido.length - a.asistido.length || a.name.localeCompare(b.name));
+
+    if (persons.length === 0) {
+        noHist.style.display = 'block';
+        return;
+    }
+    noHist.style.display = 'none';
+
+    persons.forEach((p, idx) => {
+        const initials = p.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+        const aColor = avatarColors[idx % avatarColors.length];
+        const pct = p.inscrito.length > 0 ? Math.round((p.asistido.length / p.inscrito.length) * 100) : 0;
+        const barColor = pct >= 75 ? '#22c55e' : pct >= 50 ? '#f59e0b' : '#ef4444';
+
+        const eventDetails = p.inscrito.map(evName => {
+            const asistio = p.asistido.includes(evName);
+            return `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:4px;font-size:0.73rem;font-weight:500;background:${asistio ? '#dcfce7' : '#fef2f2'};color:${asistio ? '#166534' : '#991b1b'};margin:2px;">${asistio ? '✓' : '✗'} ${esc(evName)}</span>`;
+        }).join('');
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>
+                <div class="attendee-cell">
+                    <div class="avatar ${aColor}">${initials}</div>
+                    <strong>${esc(p.name)}</strong>
+                </div>
+            </td>
+            <td style="color:#555;">${p.phone ? esc(p.phone) : '<span style="color:#ccc;font-style:italic;">Sin teléfono</span>'}</td>
+            <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <strong style="font-size:1rem;color:#222;">${p.asistido.length}</strong>
+                    <span style="font-size:0.78rem;color:#888;">de ${p.inscrito.length}</span>
+                    <div style="flex:1;max-width:80px;height:6px;background:#f0f0f5;border-radius:3px;overflow:hidden;">
+                        <div style="width:${pct}%;height:100%;background:${barColor};border-radius:3px;transition:width 0.3s;"></div>
+                    </div>
+                    <span style="font-size:0.72rem;font-weight:600;color:${barColor};">${pct}%</span>
+                </div>
+            </td>
+            <td style="font-size:0.85rem;color:#666;">${p.inscrito.length}</td>
+            <td><div style="display:flex;flex-wrap:wrap;gap:2px;">${eventDetails}</div></td>`;
+        tbody.appendChild(tr);
+    });
 }
 
 // ---- EXPORT PDF POR EVENTO (desde Asistencia) ----
