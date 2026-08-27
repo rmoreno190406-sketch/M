@@ -1,0 +1,2785 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GESTOR DE EVENTOS - Gestión de Eventos</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: #f4f5fa;
+            color: #333;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ---- SIDEBAR ---- */
+        .sidebar {
+            width: 240px;
+            background: white;
+            border-right: 1px solid #e8e8ef;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0; left: 0; bottom: 0;
+            z-index: 50;
+        }
+        .sidebar-brand {
+            padding: 20px 20px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #f0f0f5;
+        }
+        .brand-icon {
+            width: 36px; height: 36px;
+            background: #5B5FC7;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 1.1rem;
+        }
+        .brand-text h2 { font-size: 0.9rem; font-weight: 700; color: #222; }
+        .brand-text span { font-size: 0.68rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 10px 12px;
+            display: flex; flex-direction: column; gap: 2px;
+        }
+        .nav-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.88rem; font-weight: 500; color: #666;
+            border: none; background: none; width: 100%; text-align: left;
+            transition: all 0.2s;
+        }
+        .nav-item:hover { background: #f0eeff; color: #5B5FC7; }
+        .nav-item.active { background: #5B5FC7; color: white; }
+        .nav-item .nav-icon { width: 18px; text-align: center; font-size: 0.95rem; }
+
+        .sidebar-user {
+            padding: 14px 18px;
+            border-top: 1px solid #f0f0f5;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .user-avatar-sm {
+            width: 34px; height: 34px; border-radius: 50%;
+            background: #d1d5db;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.76rem; font-weight: 700; color: #555; flex-shrink: 0;
+        }
+        .user-info-sm { flex: 1; }
+        .user-info-sm .u-name { font-size: 0.84rem; font-weight: 600; color: #222; }
+        .user-info-sm .u-role { font-size: 0.73rem; color: #aaa; }
+        .u-gear { color: #bbb; cursor: pointer; font-size: 1rem; transition: color 0.2s; }
+        .u-gear:hover { color: #5B5FC7; }
+
+        /* ---- MAIN CONTENT ---- */
+        .main-content { flex: 1; margin-left: 240px; min-height: 100vh; }
+        .top-bar {
+            background: white;
+            padding: 16px 28px;
+            border-bottom: 1px solid #e8e8ef;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 10;
+        }
+        .top-bar h1 { font-size: 1.15rem; font-weight: 700; color: #222; }
+        .top-bar-actions { display: flex; align-items: center; gap: 10px; }
+        .tb-icon {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: #f4f5fa;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: #666; font-size: 1rem; transition: background 0.2s;
+        }
+        .tb-icon:hover { background: #e8e8ef; }
+        .sidebar-toggle { display: none; background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #666; }
+
+        .page-content { padding: 24px 28px; }
+        .section-content { display: none; }
+        .section-content.active { display: block; }
+
+        /* ---- EVENTS LAYOUT ---- */
+        .events-layout {
+            display: grid;
+            grid-template-columns: 340px 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+        .create-event-panel {
+            background: white; border-radius: 14px;
+            padding: 24px; border: 1px solid #e8e8ef;
+        }
+        .create-event-panel h3 { font-size: 1rem; font-weight: 700; color: #222; margin-bottom: 4px; }
+        .panel-sub { font-size: 0.8rem; color: #aaa; margin-bottom: 20px; }
+
+        /* ---- FORM GROUPS ---- */
+        .form-group { margin-bottom: 14px; }
+        .form-group label {
+            display: block;
+            font-size: 0.71rem; font-weight: 700; color: #888;
+            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;
+        }
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%; padding: 10px 14px;
+            border: 1px solid #e0e0ea; border-radius: 8px;
+            font-size: 0.88rem; font-family: inherit; outline: none;
+            transition: border-color 0.2s; background: white; color: #333;
+        }
+        .form-group textarea { resize: vertical; min-height: 80px; }
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            border-color: #5B5FC7;
+            box-shadow: 0 0 0 3px rgba(91,95,199,0.08);
+        }
+        .form-group input::placeholder,
+        .form-group textarea::placeholder { color: #bbb; }
+
+        /* Inline form row for products */
+        .form-row-inline {
+            display: grid;
+            grid-template-columns: 1fr 180px 160px auto;
+            gap: 14px; align-items: end;
+            margin-top: 16px;
+        }
+        .form-row-inline .form-group { margin-bottom: 0; }
+
+        /* ---- UPCOMING EVENTS PANEL ---- */
+        .upcoming-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 14px;
+        }
+        .upcoming-header h3 { font-size: 1rem; font-weight: 700; color: #222; }
+        .upcoming-count { font-size: 0.82rem; color: #aaa; }
+
+        .event-list-card {
+            background: white; border-radius: 12px;
+            border: 1px solid #e8e8ef;
+            padding: 18px 20px; margin-bottom: 12px;
+        }
+        .event-list-header {
+            display: flex; align-items: flex-start; justify-content: space-between;
+            margin-bottom: 6px;
+        }
+        .event-list-name { font-size: 0.95rem; font-weight: 700; color: #222; }
+        .event-list-actions {
+            display: flex; gap: 10px; align-items: center;
+            flex-shrink: 0; margin-left: 12px;
+        }
+        .act-link {
+            font-size: 0.8rem; font-weight: 500; color: #777;
+            background: none; border: none; cursor: pointer;
+            padding: 0; font-family: inherit; transition: color 0.15s;
+        }
+        .act-link:hover { color: #5B5FC7; }
+        .act-link.danger { color: #dc2626; }
+        .act-link.danger:hover { color: #b91c1c; }
+
+        .event-list-date {
+            font-size: 0.8rem; color: #999;
+            display: flex; align-items: center; gap: 5px; margin-bottom: 12px;
+        }
+
+        .progress-row {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 5px;
+        }
+        .progress-label-text { font-size: 0.78rem; color: #888; font-weight: 500; }
+        .progress-pct { font-size: 0.82rem; font-weight: 700; color: #5B5FC7; }
+        .progress-bar-container {
+            background: #e9ecef; border-radius: 10px; height: 6px; overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%; border-radius: 10px;
+            background: #5B5FC7; transition: width 0.4s;
+        }
+
+        .btn-finish-event {
+            width: 100%; margin-top: 12px;
+            padding: 10px; border: 1px solid #e0e0ea; border-radius: 8px;
+            background: white; font-size: 0.85rem; font-weight: 500; color: #444;
+            cursor: pointer; font-family: inherit; transition: background 0.2s;
+        }
+        .btn-finish-event:hover { background: #f4f5fa; }
+        .btn-finish-event.reopen { border-color: #16a34a; color: #16a34a; }
+
+        .dashed-add-card {
+            border: 2px dashed #d1d5db; border-radius: 12px;
+            padding: 28px; text-align: center; color: #bbb;
+            cursor: pointer; transition: border-color 0.2s;
+        }
+        .dashed-add-card:hover { border-color: #5B5FC7; color: #5B5FC7; }
+        .dashed-plus {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: #e9ecef;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; margin: 0 auto 8px; color: #aaa;
+            transition: background 0.2s;
+        }
+        .dashed-add-card:hover .dashed-plus { background: #eeedff; color: #5B5FC7; }
+        .dashed-add-card p { font-size: 0.85rem; }
+
+        /* ---- BUTTONS ---- */
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 8px;
+            cursor: pointer; font-size: 0.85rem; font-weight: 600;
+            transition: all 0.2s; font-family: inherit;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn-primary { background: #5B5FC7; color: white; }
+        .btn-primary:hover { background: #4a4eb3; }
+        .btn-full { width: 100%; justify-content: center; }
+        .btn-success { background: #22c55e; color: white; }
+        .btn-success:hover { background: #16a34a; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-outline { background: transparent; border: 1px solid #d1d5db; color: #555; }
+        .btn-outline:hover { background: #f4f5fa; }
+        .btn-sm { padding: 7px 14px; font-size: 0.8rem; border-radius: 7px; }
+        .btn-ghost { background: transparent; color: #5B5FC7; padding: 6px 10px; }
+        .btn-ghost:hover { background: #f0eeff; }
+        .btn-export {
+            padding: 8px 16px; border: 1px solid #e0e0ea; border-radius: 8px;
+            background: white; color: #555; font-size: 0.82rem; font-weight: 600;
+            cursor: pointer; font-family: inherit;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn-export:hover { background: #f4f5fa; }
+
+        /* ---- CARD ---- */
+        .card {
+            background: white; border-radius: 14px;
+            padding: 24px; margin-bottom: 20px; border: 1px solid #e8e8ef;
+        }
+        .card h3 { font-size: 1rem; font-weight: 700; color: #222; margin-bottom: 4px; }
+        .card-subtitle { font-size: 0.82rem; color: #aaa; margin-bottom: 16px; }
+
+        .section-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .section-header h2 { font-size: 1.1rem; font-weight: 700; color: #222; }
+
+        /* ---- STATS ---- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px; margin-bottom: 24px;
+        }
+        .stat-card {
+            background: white; border-radius: 12px;
+            padding: 18px 20px; border: 1px solid #e8e8ef;
+        }
+        .stat-card .s-label { font-size: 0.78rem; color: #999; font-weight: 500; margin-bottom: 6px; }
+        .stat-card .s-value { font-size: 1.65rem; font-weight: 700; color: #222; }
+        .stat-card .s-badge { font-size: 0.72rem; font-weight: 600; margin-top: 3px; }
+        .s-badge.up { color: #16a34a; }
+        .s-badge.down { color: #dc2626; }
+
+        .stats-layout {
+            display: grid; grid-template-columns: 1fr 300px; gap: 20px;
+        }
+
+        /* ---- TABLE ---- */
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th {
+            text-align: left; padding: 10px 16px;
+            font-size: 0.72rem; color: #999; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            border-bottom: 1px solid #eee;
+        }
+        td {
+            padding: 13px 16px; border-bottom: 1px solid #f5f5f8;
+            font-size: 0.88rem; vertical-align: middle;
+        }
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr:hover td { background: #fafafe; }
+        tfoot td {
+            padding: 13px 16px; font-weight: 700;
+            border-top: 2px solid #e8e8ef; background: #faf9ff;
+        }
+
+        /* ---- BADGES ---- */
+        .badge {
+            display: inline-block; padding: 3px 10px;
+            border-radius: 20px; font-size: 0.75rem; font-weight: 600;
+        }
+        .badge-success { background: #dcfce7; color: #16a34a; }
+        .badge-danger { background: #fee2e2; color: #dc2626; }
+        .badge-warning { background: #fef3c7; color: #d97706; }
+        .badge-info { background: #eeedff; color: #5B5FC7; }
+        .badge-closed { background: #f3f4f6; color: #6b7280; }
+
+        /* ---- AVATAR ---- */
+        .avatar {
+            width: 34px; height: 34px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; font-weight: 700; color: white; flex-shrink: 0;
+        }
+        .avatar.purple { background: #5B5FC7; }
+        .avatar.green { background: #22c55e; }
+        .avatar.orange { background: #f59e0b; }
+        .avatar.pink { background: #ec4899; }
+        .avatar.blue { background: #3b82f6; }
+        .avatar.teal { background: #14b8a6; }
+
+        .attendee-cell { display: flex; align-items: center; gap: 10px; }
+        .att-name { font-weight: 600; color: #222; font-size: 0.88rem; }
+        .att-phone { font-size: 0.78rem; color: #aaa; }
+
+        /* ---- PRODUCT TAGS ---- */
+        .product-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+        .product-tag {
+            background: #eeedff; color: #5B5FC7;
+            padding: 2px 8px; border-radius: 10px;
+            font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+        }
+
+        /* ---- ATTENDANCE TOGGLE ---- */
+        .att-toggle { display: flex; }
+        .att-toggle-btn {
+            padding: 5px 12px; border: 1px solid #e0e0ea;
+            background: #f8f9fa; color: #bbb;
+            font-size: 0.78rem; font-weight: 600;
+            cursor: pointer; font-family: inherit; transition: all 0.15s;
+        }
+        .att-toggle-btn:first-child { border-radius: 6px 0 0 6px; }
+        .att-toggle-btn:last-child { border-radius: 0 6px 6px 0; border-left: none; }
+        .att-toggle-btn.active-yes { background: #dcfce7; color: #16a34a; border-color: #86efac; }
+        .att-toggle-btn.active-no { background: #fee2e2; color: #dc2626; border-color: #fca5a5; }
+
+        /* ---- ATTENDANCE PAGE LAYOUT ---- */
+        .attendance-top {
+            display: grid; grid-template-columns: 1fr 300px;
+            gap: 20px; margin-bottom: 24px; align-items: start;
+        }
+        .att-page-title h2 { font-size: 1.4rem; font-weight: 700; color: #222; }
+        .att-page-title p { font-size: 0.83rem; color: #aaa; margin-top: 4px; }
+
+        .event-selected-card {
+            background: white; border-radius: 12px;
+            padding: 16px 18px; border: 1px solid #e8e8ef;
+        }
+        .esc-label {
+            font-size: 0.68rem; font-weight: 700; color: #aaa;
+            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;
+        }
+        .esc-name {
+            font-size: 0.88rem; font-weight: 600; color: #222; margin-bottom: 10px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .esc-progress-row { display: flex; align-items: center; gap: 8px; }
+        .esc-pct { font-size: 0.82rem; font-weight: 700; color: #5B5FC7; }
+        .esc-bar { flex: 1; height: 5px; background: #e9ecef; border-radius: 5px; overflow: hidden; }
+        .esc-bar-fill { height: 100%; background: #5B5FC7; border-radius: 5px; }
+        .esc-count { font-size: 0.78rem; color: #aaa; }
+
+        .inscribed-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 14px;
+        }
+        .inscribed-title { font-size: 1rem; font-weight: 700; color: #222; }
+        .inscribed-actions { display: flex; gap: 8px; }
+
+        /* ---- RESUMEN BOTTOM ---- */
+        .summary-bottom {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px;
+        }
+        .summary-mini-stats {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+        }
+        .mini-stat {
+            background: white; border-radius: 10px;
+            padding: 14px 16px; border: 1px solid #e8e8ef;
+        }
+        .ms-label { font-size: 0.68rem; color: #aaa; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
+        .ms-value { font-size: 1.3rem; font-weight: 700; color: #222; }
+        .ms-sub { font-size: 0.72rem; margin-top: 2px; }
+        .ms-sub.green { color: #16a34a; }
+        .ms-sub.orange { color: #f59e0b; }
+
+        .cost-breakdown {
+            background: white; border-radius: 10px;
+            padding: 18px 20px; border: 1px solid #e8e8ef;
+        }
+        .cb-header {
+            display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;
+        }
+        .cb-title { font-size: 0.95rem; font-weight: 700; color: #222; }
+        .cb-badge { font-size: 0.72rem; font-weight: 600; background: #eeedff; color: #5B5FC7; padding: 3px 10px; border-radius: 6px; }
+        .cb-row {
+            display: flex; align-items: flex-start; justify-content: space-between;
+            padding: 9px 0; border-bottom: 1px solid #f5f5f8;
+        }
+        .cb-row:last-child { border-bottom: none; font-weight: 700; }
+        .cb-row-name { font-size: 0.84rem; color: #333; }
+        .cb-row-sub { font-size: 0.73rem; color: #aaa; }
+        .cb-amount { font-size: 0.9rem; font-weight: 600; color: #222; }
+        .cb-amount.red { color: #dc2626; }
+
+        /* ---- TOP PRODUCTS ---- */
+        .top-products-card {
+            background: white; border-radius: 14px;
+            padding: 20px; border: 1px solid #e8e8ef; height: fit-content;
+        }
+        .top-products-card h3 { font-size: 0.95rem; font-weight: 700; color: #222; margin-bottom: 14px; }
+        .tp-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 0; border-bottom: 1px solid #f5f5f8;
+        }
+        .tp-item:last-child { border-bottom: none; }
+        .tp-rank {
+            width: 22px; height: 22px; border-radius: 50%;
+            background: #eeedff; color: #5B5FC7;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.72rem; font-weight: 700; flex-shrink: 0;
+        }
+        .tp-info { flex: 1; }
+        .tp-name { font-size: 0.84rem; font-weight: 600; color: #222; }
+        .tp-sub { font-size: 0.72rem; color: #aaa; }
+        .tp-bar-wrap { height: 4px; background: #eeedff; border-radius: 4px; margin-top: 5px; overflow: hidden; }
+        .tp-bar-fill { height: 100%; background: #5B5FC7; border-radius: 4px; }
+        .tp-count { font-size: 0.9rem; font-weight: 700; color: #222; }
+
+        /* ---- PRODUCTS ---- */
+        .product-icon {
+            width: 36px; height: 36px; border-radius: 8px;
+            background: #eeedff; display: flex; align-items: center; justify-content: center;
+            color: #5B5FC7; font-size: 1rem; flex-shrink: 0;
+        }
+        .product-cell { display: flex; align-items: center; gap: 10px; }
+        .product-name { font-size: 0.88rem; font-weight: 600; color: #222; }
+        .product-sub { font-size: 0.73rem; color: #aaa; }
+
+        .products-header {
+            display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+        }
+        .products-header h3 {
+            font-size: 0.95rem; font-weight: 700; color: #222;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .products-count { font-size: 0.8rem; color: #aaa; }
+
+        /* ---- PHONES ---- */
+        .phones-header {
+            display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px;
+        }
+        .phones-header h2 { font-size: 1.4rem; font-weight: 700; color: #222; }
+        .phones-header p { font-size: 0.82rem; color: #aaa; margin-top: 3px; }
+
+        .event-tag {
+            display: inline-block; background: #eeedff; color: #5B5FC7;
+            padding: 3px 10px; border-radius: 12px;
+            font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+        }
+
+        .pagination {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 20px; border-top: 1px solid #f0f0f5;
+        }
+        .pagination-info { font-size: 0.8rem; color: #aaa; }
+        .pagination-btns { display: flex; gap: 4px; }
+        .pg-btn {
+            width: 30px; height: 30px; border-radius: 6px;
+            border: 1px solid #e0e0ea; background: white;
+            font-size: 0.8rem; cursor: pointer; font-family: inherit; color: #555;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .pg-btn.active { background: #5B5FC7; color: white; border-color: #5B5FC7; }
+        .pg-btn:hover:not(.active) { background: #f4f5fa; }
+
+        /* ---- ACTION DOTS ---- */
+        .action-dots {
+            background: none; border: none; cursor: pointer;
+            font-size: 1.3rem; color: #ccc; padding: 4px 6px;
+            border-radius: 4px; transition: all 0.15s;
+        }
+        .action-dots:hover { background: #f4f5fa; color: #555; }
+
+        /* ---- MODAL ---- */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.4); z-index: 100;
+            align-items: center; justify-content: center;
+            backdrop-filter: blur(2px);
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: white; border-radius: 16px; padding: 28px;
+            max-width: 480px; width: 90%; max-height: 80vh; overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+        .modal h3 { margin-bottom: 18px; color: #222; font-size: 1.05rem; font-weight: 700; }
+
+        /* ---- EMPTY STATE ---- */
+        .empty-state { text-align: center; padding: 32px; color: #ccc; font-size: 0.9rem; }
+
+        /* ---- RESPONSIVE ---- */
+        @media (max-width: 1100px) {
+            .events-layout { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .stats-layout { grid-template-columns: 1fr; }
+            .attendance-top { grid-template-columns: 1fr; }
+            .summary-bottom { grid-template-columns: 1fr; }
+            .form-row-inline { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { margin-left: 0; }
+            .sidebar-toggle { display: block; }
+            .page-content { padding: 16px; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .form-row-inline { grid-template-columns: 1fr; }
+        }
+
+        /* ---- PRINT / PDF ---- */
+        #print-report { display: none; }
+
+        @media print {
+            body { background: white; color: #222; font-family: 'Inter', sans-serif; }
+            .sidebar, .top-bar, .main-content > .page-content { display: none !important; }
+            .main-content { margin-left: 0 !important; }
+            #print-report {
+                display: block !important;
+                padding: 20px;
+                font-size: 11px;
+                color: #222;
+            }
+            .pr-header {
+                background: #5B5FC7;
+                color: white;
+                padding: 18px 22px;
+                border-radius: 8px;
+                margin-bottom: 20px;
+            }
+            .pr-header h1 { font-size: 20px; margin: 0 0 4px; font-weight: 700; }
+            .pr-header p { margin: 0; font-size: 10px; opacity: 0.85; }
+            .pr-section-title {
+                font-size: 13px; font-weight: 700; color: #222;
+                margin: 18px 0 8px; border-bottom: 2px solid #5B5FC7;
+                padding-bottom: 4px;
+            }
+            .pr-stats-grid {
+                display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 16px;
+            }
+            .pr-stat-box {
+                border: 1px solid #e0e0ea; border-radius: 8px;
+                padding: 10px 14px;
+            }
+            .pr-stat-label { font-size: 9px; color: #999; font-weight: 700; text-transform: uppercase; margin-bottom: 3px; }
+            .pr-stat-value { font-size: 18px; font-weight: 700; color: #222; }
+            .pr-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 10px; }
+            .pr-table th {
+                text-align: left; padding: 6px 10px;
+                font-size: 8px; color: #999; font-weight: 700;
+                text-transform: uppercase; letter-spacing: 0.4px;
+                background: #f7f7fc; border-bottom: 1px solid #e0e0ea;
+            }
+            .pr-table td { padding: 7px 10px; border-bottom: 1px solid #f5f5f8; }
+            .pr-table tr:last-child td { border-bottom: none; }
+            .pr-event-block { margin-bottom: 16px; page-break-inside: avoid; }
+            .pr-event-name { font-size: 12px; font-weight: 700; color: #5B5FC7; margin-bottom: 2px; }
+            .pr-event-meta { font-size: 9px; color: #aaa; margin-bottom: 6px; }
+            .pr-att-yes { color: #16a34a; font-weight: 600; }
+            .pr-att-no { color: #dc2626; font-weight: 600; }
+            .pr-att-pend { color: #d97706; font-weight: 600; }
+            .pr-footer { margin-top: 24px; padding-top: 10px; border-top: 1px solid #e0e0ea; font-size: 9px; color: #aaa; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-icon">✂</div>
+        <div class="brand-text">
+            <h2>GESTOR DE EVENTOS</h2>
+            <span>Management</span>
+        </div>
+    </div>
+    <nav class="sidebar-nav">
+        <button class="nav-item active" data-section="events">
+            <span class="nav-icon">📅</span> Eventos
+        </button>
+        <button class="nav-item" data-section="attendance">
+            <span class="nav-icon">👥</span> Asistencia
+        </button>
+        <button class="nav-item" data-section="stats">
+            <span class="nav-icon">📊</span> Estadísticas
+        </button>
+        <button class="nav-item" data-section="products">
+            <span class="nav-icon">📦</span> Productos
+        </button>
+        <button class="nav-item" data-section="phones">
+            <span class="nav-icon">📞</span> Teléfonos
+        </button>
+        <button class="nav-item" data-section="historial">
+            <span class="nav-icon">🗓️</span> Historial
+        </button>
+    </nav>
+</aside>
+
+<!-- MAIN -->
+<div class="main-content">
+    <div class="top-bar">
+        <div style="display:flex;align-items:center;gap:12px;">
+            <button class="sidebar-toggle" id="sidebar-toggle">☰</button>
+            <h1 id="page-title">Events Dashboard</h1>
+        </div>
+    </div>
+
+    <div class="page-content">
+
+        <!-- SECTION: Eventos -->
+        <div class="section-content active" id="section-events">
+            <div class="events-layout">
+
+                <!-- Left: Create form -->
+                <div class="create-event-panel">
+                    <h3>Crear Nuevo Evento</h3>
+                    <p class="panel-sub">Programa tu próximo análisis capilar</p>
+                    <div class="form-group">
+                        <label>Nombre del Evento</label>
+                        <input type="text" id="event-name" placeholder="ej. Análisis Capilar Octubre">
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha y Hora</label>
+                        <input type="datetime-local" id="event-date">
+                    </div>
+                    <div class="form-group">
+                        <label>Descripción</label>
+                        <textarea id="event-description" placeholder="Breve descripción del evento..."></textarea>
+                    </div>
+                    <button class="btn btn-primary btn-full" id="btn-create-event">Guardar Evento</button>
+                </div>
+
+                <!-- Right: Events list -->
+                <div>
+                    <div class="upcoming-header">
+                        <h3>Próximos Eventos</h3>
+                        <span class="upcoming-count" id="events-count-badge">0 events scheduled</span>
+                    </div>
+                    <div id="events-list"></div>
+                    <div class="empty-state" id="no-events" style="display:none;">No hay eventos creados todavía.</div>
+                    <div class="dashed-add-card" onclick="document.getElementById('event-name').focus()">
+                        <div class="dashed-plus">+</div>
+                        <p>Añade más eventos a tu agenda</p>
+                    </div>
+
+                    <div id="closed-events-folder" style="display:none;margin-top:20px;">
+                        <button onclick="toggleClosedFolder()" id="closed-folder-toggle"
+                            style="width:100%;display:flex;align-items:center;gap:10px;padding:12px 16px;background:#f3f4f6;border:1px solid #e0e0ea;border-radius:10px;cursor:pointer;font-family:inherit;font-size:0.88rem;font-weight:600;color:#6b7280;transition:background 0.15s;">
+                            <span id="closed-folder-icon" style="transition:transform 0.2s;">▶</span>
+                            <span>📁 Eventos Finalizados</span>
+                            <span id="closed-folder-count" style="margin-left:auto;background:#d1d5db;color:#4b5563;padding:2px 10px;border-radius:12px;font-size:0.75rem;font-weight:700;">0</span>
+                        </button>
+                        <div id="closed-events-list" style="display:none;margin-top:8px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: Asistencia -->
+        <div class="section-content" id="section-attendance">
+            <div class="attendance-top">
+                <div class="att-page-title">
+                    <h2>Asistencia de Eventos</h2>
+                    <p>Gestión centralizada de participantes y confirmaciones</p>
+                </div>
+                <div>
+                    <div style="margin-bottom:10px;">
+                        <select id="select-event-attendance" style="width:100%;padding:9px 14px;border:1px solid #e0e0ea;border-radius:8px;font-size:0.88rem;font-family:inherit;outline:none;background:white;color:#333;">
+                            <option value="">-- Selecciona un evento --</option>
+                        </select>
+                    </div>
+                    <div class="event-selected-card" id="esc-card" style="display:none;">
+                        <div class="esc-label">Evento Seleccionado</div>
+                        <div class="esc-name" id="esc-name">—</div>
+                        <div class="esc-progress-row">
+                            <span class="esc-pct" id="esc-pct">0%</span>
+                            <div class="esc-bar"><div class="esc-bar-fill" id="esc-bar-fill" style="width:0%"></div></div>
+                            <span class="esc-count" id="esc-count">0/0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="attendance-panel" style="display:none;">
+                <div id="closed-banner" style="display:none;background:#f3f4f6;border:1px solid #d1d5db;border-radius:10px;padding:12px 18px;margin-bottom:16px;text-align:center;">
+                    <span style="color:#6b7280;font-weight:600;">✅ Este evento está finalizado.</span>
+                    <button style="margin-left:12px;border:1px solid #16a34a;color:#16a34a;background:white;border-radius:6px;padding:5px 12px;cursor:pointer;font-family:inherit;font-size:0.82rem;font-weight:600;" id="btn-reopen-from-attendance">🔓 Reabrir</button>
+                </div>
+
+                <div class="inscribed-header">
+                    <div class="inscribed-title">Personas Inscritas</div>
+                    <div class="inscribed-actions">
+                        <button class="btn-export btn-sm" onclick="exportEventPDF()" style="font-size:0.8rem;">📄 Exportar PDF</button>
+                        <button class="btn btn-primary btn-sm" id="btn-open-inscribir" onclick="openInscribirModal()">👤 Añadir Invitado</button>
+                    </div>
+                </div>
+
+                <div class="card" style="padding:0;" id="attendees-list-card">
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nombre y Contacto</th>
+                                    <th>Hora Cita</th>
+                                    <th>Estado de Asistencia</th>
+                                    <th>Anotaciones</th>
+                                    <th>Productos Adquiridos</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendees-table-body"></tbody>
+                        </table>
+                    </div>
+                    <div class="empty-state" id="no-attendees">No hay personas inscritas en este evento.</div>
+                </div>
+
+                <!-- Resumen -->
+                <div id="event-summary-card" style="display:none;">
+                    <div class="summary-bottom">
+                        <div class="summary-mini-stats">
+                            <div class="mini-stat">
+                                <div class="ms-label">Recaudación</div>
+                                <div class="ms-value" id="ms-recaudacion">€0</div>
+                                <div class="ms-sub green" id="ms-rec-sub">+12% vs meta</div>
+                            </div>
+                            <div class="mini-stat">
+                                <div class="ms-label">Nuevos Leads</div>
+                                <div class="ms-value" id="ms-leads">0</div>
+                                <div class="ms-sub green">Contactar hoy</div>
+                            </div>
+                            <div class="mini-stat">
+                                <div class="ms-label">Stock Saliente</div>
+                                <div class="ms-value" id="ms-stock">0%</div>
+                                <div class="ms-sub orange">Reponer pronto</div>
+                            </div>
+                        </div>
+                        <div class="cost-breakdown">
+                            <div class="cb-header">
+                                <div class="cb-title">Desglose de Costos y Descuentos</div>
+                                <span class="cb-badge">Cierre Parcial</span>
+                            </div>
+                            <div id="cost-breakdown-rows"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: Estadísticas -->
+        <div class="section-content" id="section-stats">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px;">
+                <div>
+                    <h2 style="font-size:1.5rem;font-weight:700;color:#222;">Panel de Estadísticas</h2>
+                    <p style="font-size:0.82rem;color:#aaa;margin-top:4px;">Análisis de rendimiento y eventos globales de la marca.</p>
+                </div>
+                <button class="btn-export" onclick="exportToPDF()" style="align-self:center;">📄 Exportar PDF</button>
+            </div>
+
+            <div class="stats-grid" id="global-stats"></div>
+
+            <div class="card" style="margin-bottom:20px;padding:20px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                    <h3 style="margin:0;">Asistencia por Evento</h3>
+                    <div style="display:flex;gap:12px;align-items:center;font-size:0.8rem;color:#aaa;">
+                        <span style="display:flex;align-items:center;gap:5px;"><span style="width:12px;height:10px;background:#eeedff;display:inline-block;border-radius:2px;"></span>Inscritos</span>
+                        <span style="display:flex;align-items:center;gap:5px;"><span style="width:12px;height:10px;background:#5B5FC7;display:inline-block;border-radius:2px;"></span>Asistieron</span>
+                    </div>
+                </div>
+                <canvas id="chart-attendance" style="width:100%;display:block;"></canvas>
+                <div id="chart-placeholder" class="empty-state" style="display:none;padding:16px;">Sin datos de eventos activos todavía.</div>
+            </div>
+
+            <div class="stats-layout">
+                <div class="card" style="padding:0;">
+                    <div style="padding:20px 20px 0;display:flex;align-items:center;justify-content:space-between;">
+                        <h3>Comparativa de Eventos</h3>
+                        <button id="btn-ver-todos" onclick="toggleVerTodos()" style="font-size:0.8rem;color:#5B5FC7;font-weight:600;border:none;background:none;cursor:pointer;font-family:inherit;display:none;">Ver todos</button>
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Evento</th>
+                                    <th>Registrados</th>
+                                    <th>Asistencia</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stats-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="top-products-card">
+                    <h3>Top Ventas ↗</h3>
+                    <div id="top-products-list"></div>
+                    <div class="empty-state" id="no-products-stats" style="padding:16px;">Sin datos todavía.</div>
+                    <div style="margin-top:14px;text-align:center;">
+                        <button class="btn btn-outline btn-sm btn-full" style="color:#5B5FC7;border-color:#5B5FC7;" onclick="navigateToSection('products')">Ver Inventario Completo</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: Productos -->
+        <div class="section-content" id="section-products">
+            <div class="card">
+                <h3 style="display:flex;align-items:center;gap:6px;"><span style="color:#5B5FC7;font-size:1.1rem;">⊕</span> Agregar Nuevo Producto</h3>
+                <div class="form-row-inline">
+                    <div class="form-group">
+                        <label>Nombre del Producto</label>
+                        <input type="text" id="product-name" placeholder="Ej. Champú Revitalizante">
+                    </div>
+                    <div class="form-group">
+                        <label>CN (Código Nacional)</label>
+                        <input type="text" id="product-cn" placeholder="Ej. 123456.7">
+                    </div>
+                    <div class="form-group">
+                        <label>Precio (Opcional)</label>
+                        <input type="number" id="product-price" placeholder="€ 0.00" step="0.01" min="0">
+                    </div>
+                    <button class="btn btn-primary" id="btn-add-product" style="white-space:nowrap;">💾 Agregar al Catálogo</button>
+                </div>
+            </div>
+
+            <div class="products-header">
+                <h3><span style="color:#5B5FC7;">≡</span> Inventario de Productos</h3>
+                <span class="products-count" id="products-count-badge">Mostrando 0 productos</span>
+            </div>
+
+            <div class="card" style="padding:0;">
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>CN</th>
+                                <th>Precio</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="products-table-body"></tbody>
+                    </table>
+                </div>
+                <div class="empty-state" id="no-products">No hay productos en el catálogo.</div>
+            </div>
+        </div>
+
+        <!-- SECTION: Teléfonos -->
+        <div class="section-content" id="section-phones">
+            <div class="phones-header">
+                <div>
+                    <h2>Directorio de Teléfonos</h2>
+                    <p>Gestión centralizada de contactos y eventos.</p>
+                </div>
+            </div>
+
+            <div style="margin-bottom:16px;position:relative;">
+                <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#bbb;">🔍</span>
+                <input type="text" id="phone-search"
+                    placeholder="Buscar por nombre o número de teléfono..."
+                    style="width:100%;padding:10px 14px 10px 40px;border:1px solid #e0e0ea;border-radius:8px;font-size:0.88rem;font-family:inherit;outline:none;background:white;">
+            </div>
+
+            <div class="card" style="padding:0;">
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Teléfono</th>
+                                <th>Eventos</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="phones-table-body"></tbody>
+                    </table>
+                </div>
+                <div class="pagination" id="phones-pagination-bar">
+                    <span class="pagination-info" id="phones-count-text">Mostrando 0 de 0 contactos</span>
+                    <div class="pagination-btns" id="phones-pagination-btns">
+                        <button class="pg-btn">‹</button>
+                        <button class="pg-btn active">1</button>
+                        <button class="pg-btn">2</button>
+                        <button class="pg-btn">3</button>
+                        <button class="pg-btn">›</button>
+                    </div>
+                </div>
+                <div class="empty-state" id="no-phones" style="display:none;">No hay contactos registrados.</div>
+            </div>
+        </div>
+
+        <div class="section-content" id="section-historial">
+            <div class="phones-header">
+                <div>
+                    <h2>Historial de Asistencia</h2>
+                    <p>Segmentación de clientes por recencia, frecuencia y compras. Prioridad de llamada automática.</p>
+                </div>
+            </div>
+
+            <div id="historial-segment-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px;"></div>
+
+            <div style="display:flex;gap:10px;margin-bottom:16px;align-items:center;flex-wrap:wrap;">
+                <div style="flex:1;min-width:200px;position:relative;">
+                    <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#bbb;">🔍</span>
+                    <input type="text" id="historial-search"
+                        placeholder="Buscar por nombre o teléfono..."
+                        style="width:100%;padding:10px 14px 10px 40px;border:1px solid #e0e0ea;border-radius:8px;font-size:0.88rem;font-family:inherit;outline:none;background:white;"
+                        oninput="refreshHistorial()">
+                </div>
+                <div style="display:flex;gap:4px;flex-wrap:wrap;" id="historial-filter-chips">
+                    <button onclick="setHistorialFilter('todos')" class="hist-chip hist-chip-active" data-filter="todos" style="padding:6px 14px;border-radius:20px;border:1px solid #e0e0ea;background:#5B5FC7;color:white;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;">Todos</button>
+                    <button onclick="setHistorialFilter('siempre')" class="hist-chip" data-filter="siempre" style="padding:6px 14px;border-radius:20px;border:1px solid #e0e0ea;background:white;color:#666;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;">⭐ Asiste siempre</button>
+                    <button onclick="setHistorialFilter('regular')" class="hist-chip" data-filter="regular" style="padding:6px 14px;border-radius:20px;border:1px solid #e0e0ea;background:white;color:#666;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;">💚 Asiste con regularidad</button>
+                    <button onclick="setHistorialFilter('poco')" class="hist-chip" data-filter="poco" style="padding:6px 14px;border-radius:20px;border:1px solid #e0e0ea;background:white;color:#666;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;">⚠️ Asiste poco</button>
+                    <button onclick="setHistorialFilter('no_asiste')" class="hist-chip" data-filter="no_asiste" style="padding:6px 14px;border-radius:20px;border:1px solid #e0e0ea;background:white;color:#666;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;">🔴 No asiste</button>
+                    <button onclick="setHistorialFilter('nuevo')" class="hist-chip" data-filter="nuevo" style="padding:6px 14px;border-radius:20px;border:1px solid #e0e0ea;background:white;color:#666;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;">🆕 Nuevo</button>
+                    <button onclick="setHistorialFilter('no_compra')" class="hist-chip" data-filter="no_compra" style="padding:6px 14px;border-radius:20px;border:1px solid #e0e0ea;background:white;color:#666;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:inherit;">🛒 No compra</button>
+                </div>
+            </div>
+
+            <div class="card" style="padding:0;">
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Persona</th>
+                                <th>Teléfono</th>
+                                <th>Segmento</th>
+                                <th>Prioridad</th>
+                                <th>Asistencias</th>
+                                <th>Compras</th>
+                                <th>Última visita</th>
+                                <th>Detalle</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historial-table-body"></tbody>
+                    </table>
+                </div>
+                <div class="empty-state" id="no-historial" style="display:none;">No hay datos de asistencia registrados.</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal: Inscribir persona -->
+<div class="modal-overlay" id="modal-inscribir">
+    <div class="modal">
+        <h3>Inscribir Persona</h3>
+        <div class="form-group">
+            <label>Buscar cliente existente</label>
+            <div style="position:relative;">
+                <input type="text" id="client-search" placeholder="Escribe nombre o teléfono..." autocomplete="off"
+                    oninput="filterClients(this.value)" onfocus="filterClients(this.value)"
+                    style="padding-right:32px;">
+                <div id="client-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1px solid #e0e0ea;border-top:none;border-radius:0 0 8px 8px;z-index:50;max-height:190px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.08);"></div>
+            </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin:4px 0 12px;">
+            <div style="flex:1;height:1px;background:#f0f0f5;"></div>
+            <span style="font-size:0.7rem;color:#bbb;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">o nuevo cliente</span>
+            <div style="flex:1;height:1px;background:#f0f0f5;"></div>
+        </div>
+        <div class="form-group">
+            <label>Nombre completo</label>
+            <input type="text" id="attendee-name" placeholder="Nombre y apellidos">
+        </div>
+        <div class="form-group">
+            <label>Teléfono</label>
+            <input type="tel" id="attendee-phone" placeholder="Ej: 612 345 678">
+        </div>
+        <div class="form-group">
+            <label>Hora de Cita</label>
+            <input type="time" id="attendee-time">
+        </div>
+        <div class="form-group">
+            <label>Anotaciones</label>
+            <textarea id="attendee-notes" placeholder="Notas sobre el asistente..." style="min-height:50px;"></textarea>
+        </div>
+        <div style="margin-top:18px;display:flex;gap:8px;justify-content:flex-end;">
+            <button class="btn btn-outline" onclick="closeInscribirModal()">Cancelar</button>
+            <button class="btn btn-primary" id="btn-add-attendee">+ Inscribir</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Productos del asistente -->
+<div class="modal-overlay" id="modal-products">
+    <div class="modal" style="max-width:580px;">
+        <h3>Productos de <span id="modal-attendee-name"></span></h3>
+        <div style="margin-bottom:14px;">
+            <label style="display:block;font-size:0.71rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Buscar producto por nombre o CN</label>
+            <div style="position:relative;">
+                <input type="text" id="product-search-modal" placeholder="Escribe nombre o codigo nacional..." autocomplete="off"
+                    style="width:100%;padding:9px 14px;border:1px solid #e0e0ea;border-radius:8px;font-size:0.88rem;font-family:inherit;outline:none;">
+                <div id="product-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1px solid #e0e0ea;border-top:none;border-radius:0 0 8px 8px;z-index:50;max-height:200px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.08);"></div>
+            </div>
+        </div>
+        <div id="modal-products-list" style="max-height:320px;overflow-y:auto;"></div>
+        <div id="modal-products-total" style="margin-top:12px;padding-top:12px;border-top:2px solid #e8e8ef;display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:0.88rem;font-weight:700;color:#222;">Total</span>
+            <span id="modal-total-amount" style="font-size:1.1rem;font-weight:700;color:#5B5FC7;">0.00 &euro;</span>
+        </div>
+        <div style="margin-top:18px;display:flex;gap:8px;justify-content:flex-end;">
+            <button class="btn btn-outline" id="btn-modal-close">Cerrar</button>
+            <button class="btn btn-primary" id="btn-modal-save">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Editar evento -->
+<div class="modal-overlay" id="modal-edit-event">
+    <div class="modal">
+        <h3>Editar Evento</h3>
+        <div class="form-group">
+            <label>Nombre del Evento</label>
+            <input type="text" id="edit-event-name" placeholder="Nombre del evento">
+        </div>
+        <div class="form-group">
+            <label>Fecha y Hora</label>
+            <input type="datetime-local" id="edit-event-date">
+        </div>
+        <div class="form-group">
+            <label>Descripción</label>
+            <textarea id="edit-event-description" placeholder="Descripción del evento..."></textarea>
+        </div>
+        <input type="hidden" id="edit-event-id">
+        <div style="margin-top:18px;display:flex;gap:8px;justify-content:flex-end;">
+            <button class="btn btn-outline" onclick="document.getElementById('modal-edit-event').classList.remove('active')">Cancelar</button>
+            <button class="btn btn-primary" id="btn-save-edit-event">Guardar Cambios</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Editar asistente -->
+<div class="modal-overlay" id="modal-edit-attendee">
+    <div class="modal">
+        <h3>Editar Persona</h3>
+        <div class="form-group">
+            <label>Nombre completo</label>
+            <input type="text" id="edit-att-name" placeholder="Nombre y apellidos">
+        </div>
+        <div class="form-group">
+            <label>Teléfono</label>
+            <input type="tel" id="edit-att-phone" placeholder="Ej: 612 345 678">
+        </div>
+        <div class="form-group">
+            <label>Hora de Cita</label>
+            <input type="time" id="edit-att-time">
+        </div>
+        <div class="form-group">
+            <label>Anotaciones</label>
+            <textarea id="edit-att-notes" placeholder="Notas sobre el asistente..." style="min-height:50px;"></textarea>
+        </div>
+        <input type="hidden" id="edit-att-event-id">
+        <input type="hidden" id="edit-att-idx">
+        <div style="margin-top:18px;display:flex;gap:8px;justify-content:flex-end;">
+            <button class="btn btn-outline" onclick="document.getElementById('modal-edit-attendee').classList.remove('active')">Cancelar</button>
+            <button class="btn btn-primary" id="btn-save-edit-attendee">Guardar Cambios</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ---- DATA LAYER ----
+function loadData() {
+    const data = localStorage.getItem('hairEventData');
+    return data ? JSON.parse(data) : { events: [], products: [], contacts: [] };
+}
+function saveData(data) {
+    localStorage.setItem('hairEventData', JSON.stringify(data));
+}
+let appData = loadData();
+
+// ---- SIDEBAR NAV ----
+const pageTitles = {
+    events: 'Panel de Eventos',
+    attendance: 'Asistencia de Eventos',
+    stats: 'Panel de Estadísticas',
+    products: 'Catálogo de Productos',
+    phones: 'Directorio de Teléfonos',
+    historial: 'Historial de Asistencia'
+};
+
+document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.section-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        const section = btn.dataset.section;
+        document.getElementById('section-' + section).classList.add('active');
+        document.getElementById('page-title').textContent = pageTitles[section] || '';
+        if (section === 'attendance') refreshAttendance();
+        if (section === 'stats') refreshStats();
+        if (section === 'phones') refreshPhones();
+        if (section === 'historial') refreshHistorial();
+        document.getElementById('sidebar').classList.remove('open');
+    });
+});
+
+document.getElementById('sidebar-toggle').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('open');
+});
+
+// Fix 4: Navigate to section programmatically
+function navigateToSection(section) {
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.section-content').forEach(c => c.classList.remove('active'));
+    document.querySelector('[data-section="' + section + '"]').classList.add('active');
+    document.getElementById('section-' + section).classList.add('active');
+    document.getElementById('page-title').textContent = pageTitles[section] || '';
+    if (section === 'attendance') refreshAttendance();
+    if (section === 'stats') refreshStats();
+    if (section === 'phones') refreshPhones();
+    if (section === 'historial') refreshHistorial();
+}
+
+// ---- EVENTS ----
+document.getElementById('btn-create-event').addEventListener('click', () => {
+    const name = document.getElementById('event-name').value.trim();
+    const dateVal = document.getElementById('event-date').value;
+    const desc = document.getElementById('event-description').value.trim();
+    if (!name) return alert('Introduce un nombre para el evento.');
+    if (!dateVal) return alert('Selecciona una fecha y hora.');
+    appData.events.push({
+        id: Date.now().toString(),
+        name,
+        date: dateVal.split('T')[0],
+        time: dateVal.split('T')[1] || '',
+        description: desc,
+        attendees: []
+    });
+    saveData(appData);
+    document.getElementById('event-name').value = '';
+    document.getElementById('event-date').value = '';
+    document.getElementById('event-description').value = '';
+    refreshEvents();
+});
+
+const avatarColors = ['purple', 'green', 'orange', 'pink', 'blue', 'teal'];
+
+function refreshEvents() {
+    const list = document.getElementById('events-list');
+    const closedList = document.getElementById('closed-events-list');
+    const closedFolder = document.getElementById('closed-events-folder');
+    const noEvents = document.getElementById('no-events');
+    const countBadge = document.getElementById('events-count-badge');
+    list.innerHTML = '';
+    closedList.innerHTML = '';
+
+    const activeEvents = appData.events.filter(ev => !ev.closed);
+    const closedEvents = appData.events.filter(ev => ev.closed);
+
+    if (appData.events.length === 0) {
+        noEvents.style.display = 'block';
+        countBadge.textContent = '0 eventos';
+        closedFolder.style.display = 'none';
+        refreshEventSelectors();
+        return;
+    }
+    noEvents.style.display = activeEvents.length === 0 && closedEvents.length === 0 ? 'block' : 'none';
+    countBadge.textContent = activeEvents.length + ' evento' + (activeEvents.length !== 1 ? 's' : '') + ' activo' + (activeEvents.length !== 1 ? 's' : '');
+
+    appData.events.sort((a, b) => b.date.localeCompare(a.date));
+
+    function buildEventCard(ev, isClosed) {
+        const total = ev.attendees.length;
+        const attended = ev.attendees.filter(a => a.attended).length;
+        const pct = total > 0 ? Math.round((attended / total) * 100) : 0;
+        const timeStr = ev.time ? ' • ' + ev.time : '';
+        const dateDisplay = formatDateLong(ev.date) + timeStr;
+
+        const card = document.createElement('div');
+        card.className = 'event-list-card';
+        if (isClosed) card.style.opacity = '0.7';
+
+        const finishBtn = isClosed
+            ? `<button class="btn-finish-event reopen" onclick="reopenEvent('${ev.id}')">🔓 Reabrir Evento</button>`
+            : `<button class="btn-finish-event" onclick="closeEvent('${ev.id}')">Finalizar Evento</button>`;
+
+        card.innerHTML = `
+            <div class="event-list-header">
+                <div class="event-list-name">${isClosed ? '✅ ' : ''}${esc(ev.name)}</div>
+                <div class="event-list-actions">
+                    <button class="act-link" onclick="goToEventAttendance('${ev.id}')">Gestionar</button>
+                    <button class="act-link" onclick="openEditEventModal('${ev.id}')">Editar</button>
+                    <button class="act-link danger" onclick="deleteEvent('${ev.id}')">Eliminar</button>
+                </div>
+            </div>
+            <div class="event-list-date">📅 ${dateDisplay}</div>
+            <div>
+                <div class="progress-row">
+                    <span class="progress-label-text">Tasa de asistencia</span>
+                    <span class="progress-pct">${pct}%</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" style="width:${pct}%"></div>
+                </div>
+            </div>
+            ${finishBtn}`;
+        return card;
+    }
+
+    activeEvents.forEach(ev => list.appendChild(buildEventCard(ev, false)));
+
+    if (activeEvents.length === 0) {
+        noEvents.style.display = 'block';
+    }
+
+    if (closedEvents.length > 0) {
+        closedFolder.style.display = 'block';
+        document.getElementById('closed-folder-count').textContent = closedEvents.length;
+        closedEvents.forEach(ev => closedList.appendChild(buildEventCard(ev, true)));
+    } else {
+        closedFolder.style.display = 'none';
+    }
+
+    refreshEventSelectors();
+}
+
+function toggleClosedFolder() {
+    const list = document.getElementById('closed-events-list');
+    const icon = document.getElementById('closed-folder-icon');
+    const isOpen = list.style.display !== 'none';
+    list.style.display = isOpen ? 'none' : 'block';
+    icon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(90deg)';
+}
+
+function goToEventAttendance(eventId) {
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.section-content').forEach(c => c.classList.remove('active'));
+    document.querySelector('[data-section="attendance"]').classList.add('active');
+    document.getElementById('section-attendance').classList.add('active');
+    document.getElementById('page-title').textContent = pageTitles['attendance'];
+    document.getElementById('select-event-attendance').value = eventId;
+    refreshAttendance();
+}
+
+function closeEvent(id) {
+    if (!confirm('¿Finalizar este evento? Podrás reabrirlo más tarde si lo necesitas.')) return;
+    const event = appData.events.find(e => e.id === id);
+    if (event) { event.closed = true; saveData(appData); refreshEvents(); refreshAttendance(); }
+}
+
+function reopenEvent(id) {
+    if (!confirm('¿Reabrir este evento? Se podrán volver a hacer cambios.')) return;
+    const event = appData.events.find(e => e.id === id);
+    if (event) { event.closed = false; saveData(appData); refreshEvents(); refreshAttendance(); }
+}
+
+function deleteEvent(id) {
+    if (!confirm('¿Seguro que quieres eliminar este evento y todos sus datos?')) return;
+    appData.events = appData.events.filter(e => e.id !== id);
+    saveData(appData);
+    refreshEvents();
+}
+
+// ---- EDIT EVENT ----
+function openEditEventModal(id) {
+    const ev = appData.events.find(e => e.id === id);
+    if (!ev) return;
+    document.getElementById('edit-event-id').value = id;
+    document.getElementById('edit-event-name').value = ev.name;
+    const dtVal = ev.time ? ev.date + 'T' + ev.time : ev.date;
+    document.getElementById('edit-event-date').value = dtVal;
+    document.getElementById('edit-event-description').value = ev.description || '';
+    document.getElementById('modal-edit-event').classList.add('active');
+}
+
+document.getElementById('btn-save-edit-event').addEventListener('click', () => {
+    const id = document.getElementById('edit-event-id').value;
+    const name = document.getElementById('edit-event-name').value.trim();
+    const dateVal = document.getElementById('edit-event-date').value;
+    const desc = document.getElementById('edit-event-description').value.trim();
+    if (!name) return alert('Introduce un nombre para el evento.');
+    if (!dateVal) return alert('Selecciona una fecha.');
+    const ev = appData.events.find(e => e.id === id);
+    if (ev) {
+        ev.name = name;
+        ev.date = dateVal.split('T')[0];
+        ev.time = dateVal.split('T')[1] || '';
+        ev.description = desc;
+        saveData(appData);
+        refreshEvents();
+        refreshAttendance();
+    }
+    document.getElementById('modal-edit-event').classList.remove('active');
+});
+
+// ---- EDIT ATTENDEE ----
+function openEditAttendeeModal(eventId, idx) {
+    const ev = appData.events.find(e => e.id === eventId);
+    if (!ev || !ev.attendees[idx]) return;
+    const att = ev.attendees[idx];
+    document.getElementById('edit-att-event-id').value = eventId;
+    document.getElementById('edit-att-idx').value = idx;
+    document.getElementById('edit-att-name').value = att.name;
+    document.getElementById('edit-att-phone').value = att.phone || '';
+    document.getElementById('edit-att-time').value = att.appointmentTime || '';
+    document.getElementById('edit-att-notes').value = att.notes || '';
+    document.getElementById('modal-edit-attendee').classList.add('active');
+}
+
+document.getElementById('btn-save-edit-attendee').addEventListener('click', () => {
+    const eventId = document.getElementById('edit-att-event-id').value;
+    const idx = parseInt(document.getElementById('edit-att-idx').value);
+    const name = document.getElementById('edit-att-name').value.trim();
+    const phone = document.getElementById('edit-att-phone').value.trim();
+    if (!name) return alert('Introduce un nombre.');
+    const ev = appData.events.find(e => e.id === eventId);
+    if (ev && ev.attendees[idx]) {
+        ev.attendees[idx].name = name;
+        ev.attendees[idx].phone = phone;
+        ev.attendees[idx].appointmentTime = document.getElementById('edit-att-time').value || '';
+        ev.attendees[idx].notes = document.getElementById('edit-att-notes').value.trim();
+        saveData(appData);
+        refreshAttendance();
+    }
+    document.getElementById('modal-edit-attendee').classList.remove('active');
+});
+
+// ---- EVENT SELECTORS ----
+function refreshEventSelectors() {
+    const sel = document.getElementById('select-event-attendance');
+    const current = sel.value;
+    sel.innerHTML = '<option value="">-- Selecciona un evento --</option>';
+    appData.events.forEach(ev => {
+        sel.innerHTML += `<option value="${ev.id}">${esc(ev.name)} (${formatDate(ev.date)})</option>`;
+    });
+    sel.value = current;
+}
+
+// ---- ATTENDANCE ----
+document.getElementById('select-event-attendance').addEventListener('change', refreshAttendance);
+
+document.getElementById('btn-reopen-from-attendance').addEventListener('click', () => {
+    const event = getSelectedEvent();
+    if (event) reopenEvent(event.id);
+});
+
+function getSelectedEvent() {
+    const id = document.getElementById('select-event-attendance').value;
+    return appData.events.find(e => e.id === id) || null;
+}
+
+function getProductItems(products) {
+    if (!products) return [];
+    return products.map(p => typeof p === 'object' ? { name: p.name, qty: p.qty || 1, discount: p.discount || 0 } : { name: p, qty: 1, discount: 0 });
+}
+
+function refreshAttendance() {
+    const event = getSelectedEvent();
+    const panel = document.getElementById('attendance-panel');
+    const escCard = document.getElementById('esc-card');
+
+    if (!event) {
+        panel.style.display = 'none';
+        escCard.style.display = 'none';
+        return;
+    }
+
+    panel.style.display = 'block';
+    escCard.style.display = 'block';
+
+    const isClosed = event.closed === true;
+    const total = event.attendees.length;
+    const attended = event.attendees.filter(a => a.attended).length;
+    const pct = total > 0 ? Math.round((attended / total) * 100) : 0;
+
+    document.getElementById('esc-name').textContent = event.name;
+    document.getElementById('esc-pct').textContent = pct + '%';
+    document.getElementById('esc-bar-fill').style.width = pct + '%';
+    document.getElementById('esc-count').textContent = attended + '/' + total;
+
+    document.getElementById('closed-banner').style.display = isClosed ? 'block' : 'none';
+    document.getElementById('btn-open-inscribir').style.display = isClosed ? 'none' : '';
+
+    const tbody = document.getElementById('attendees-table-body');
+    const noAtt = document.getElementById('no-attendees');
+    tbody.innerHTML = '';
+
+    if (total === 0) {
+        noAtt.style.display = 'block';
+    } else {
+        noAtt.style.display = 'none';
+        event.attendees.forEach((att, idx) => {
+            const initials = att.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+            const aColor = avatarColors[idx % avatarColors.length];
+
+            const yesActive = att.attended === true ? 'active-yes' : '';
+            const noActive = att.attended === false ? 'active-no' : '';
+
+            const toggleBtns = isClosed
+                ? (att.attended === true
+                    ? '<span class="badge badge-success">Asistió</span>'
+                    : att.attended === false
+                        ? '<span class="badge badge-danger">No asistió</span>'
+                        : '<span class="badge badge-warning">Pendiente</span>')
+                : `<div class="att-toggle">
+                    <button class="att-toggle-btn ${yesActive}" onclick="markAttendance('${event.id}',${idx},true)">Asistió</button>
+                    <button class="att-toggle-btn ${noActive}" onclick="markAttendance('${event.id}',${idx},false)">No asistió</button>
+                   </div>`;
+
+            const productItems = getProductItems(att.products);
+            const productTags = productItems.length > 0
+                ? productItems.map(p => {
+                    const dBadge = p.discount > 0 ? `<span style="font-size:0.65rem;color:#856404;"> -${p.discount}%</span>` : '';
+                    return `<span class="product-tag">${esc(p.name)}${p.qty > 1 ? ' x' + p.qty : ''}${dBadge}</span>`;
+                }).join('')
+                : '<span style="color:#ccc;font-style:italic;font-size:0.82rem;">Ninguno</span>';
+
+            const actionsCell = isClosed
+                ? '<span style="color:#ccc;">—</span>'
+                : `<div style="display:flex;gap:5px;align-items:center;">
+                    <button onclick="openProductsModal('${event.id}',${idx})" title="Asignar productos" style="background:#eeedff;border:none;border-radius:6px;padding:5px 9px;cursor:pointer;font-size:0.8rem;color:#5B5FC7;font-weight:600;font-family:inherit;">📦</button>
+                    <button onclick="openEditAttendeeModal('${event.id}',${idx})" title="Editar perfil" style="background:#f4f5fa;border:none;border-radius:6px;padding:5px 9px;cursor:pointer;font-size:0.8rem;color:#555;font-weight:600;font-family:inherit;">✏️</button>
+                    <button onclick="removeAttendee('${event.id}',${idx})" title="Eliminar" style="background:#fee2e2;border:none;border-radius:6px;padding:5px 9px;cursor:pointer;font-size:0.8rem;color:#dc2626;font-weight:600;font-family:inherit;">🗑</button>
+                   </div>`;
+
+            const noteText = att.notes || '';
+            const noteDisplay = isClosed
+                ? (noteText ? `<span style="font-size:0.82rem;color:#666;">${esc(noteText)}</span>` : '<span style="color:#ccc;font-size:0.82rem;">—</span>')
+                : `<div style="position:relative;">
+                    <textarea onchange="saveAttNote('${event.id}',${idx},this.value)" placeholder="Escribe una nota..." style="width:100%;min-width:120px;max-width:200px;padding:6px 8px;border:1px solid #e0e0ea;border-radius:6px;font-size:0.78rem;font-family:inherit;resize:vertical;min-height:32px;max-height:80px;outline:none;color:#333;background:#fafafe;transition:border-color 0.2s;" onfocus="this.style.borderColor='#5B5FC7'" onblur="this.style.borderColor='#e0e0ea'">${esc(noteText)}</textarea>
+                   </div>`;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>
+                    <div class="attendee-cell">
+                        <div class="avatar ${aColor}">${initials}</div>
+                        <div>
+                            <div class="att-name">${esc(att.name)}</div>
+                            <div class="att-phone">${att.phone ? esc(att.phone) : ''}</div>
+                        </div>
+                    </div>
+                </td>
+                <td style="font-size:0.85rem;color:#555;font-weight:600;">${att.appointmentTime || '<span style="color:#ccc;">—</span>'}</td>
+                <td>${toggleBtns}</td>
+                <td>${noteDisplay}</td>
+                <td><div class="product-tags">${productTags}</div></td>
+                <td>${actionsCell}</td>`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Event summary
+    const summaryCard = document.getElementById('event-summary-card');
+    const buyersWithProducts = event.attendees.filter(a => getProductItems(a.products).length > 0);
+
+    if (buyersWithProducts.length === 0) {
+        summaryCard.style.display = 'none';
+    } else {
+        summaryCard.style.display = 'block';
+        let grandOriginal = 0, grandDiscount = 0, grandFinal = 0;
+
+        buyersWithProducts.forEach(att => {
+            const prods = getProductItems(att.products);
+            prods.forEach(item => {
+                const prod = appData.products.find(p => p.name === item.name);
+                const price = prod && prod.price ? Number(prod.price) * item.qty : 0;
+                const disc = price * ((item.discount || 0) / 100);
+                grandOriginal += price;
+                grandDiscount += disc;
+                grandFinal += price - disc;
+            });
+        });
+
+        document.getElementById('ms-recaudacion').textContent = '€' + grandFinal.toFixed(0);
+        document.getElementById('ms-leads').textContent = event.attendees.filter(a => !a.attended && a.attended !== false).length;
+        const stockPct = total > 0 ? Math.round((buyersWithProducts.length / total) * 100) : 0;
+        document.getElementById('ms-stock').textContent = stockPct + '%';
+
+        const productTotals = {};
+        buyersWithProducts.forEach(att => {
+            getProductItems(att.products).forEach(item => {
+                const prod = appData.products.find(p => p.name === item.name);
+                const price = prod && prod.price ? Number(prod.price) : 0;
+                const lineTotal = price * item.qty;
+                const lineDisc = lineTotal * ((item.discount || 0) / 100);
+                if (!productTotals[item.name]) productTotals[item.name] = { count: 0, totalBruto: 0, totalDesc: 0 };
+                productTotals[item.name].count += item.qty;
+                productTotals[item.name].totalBruto += lineTotal;
+                productTotals[item.name].totalDesc += lineDisc;
+            });
+        });
+        let cbHTML = '';
+        Object.entries(productTotals).forEach(([name, data]) => {
+            const prodRef = appData.products.find(p => p.name === name);
+            const cnText = prodRef && prodRef.cn ? `CN: ${prodRef.cn} · ` : '';
+            const netProduct = data.totalBruto - data.totalDesc;
+            const discInfo = data.totalDesc > 0 ? ` · Dto: -€${data.totalDesc.toFixed(2)}` : '';
+            cbHTML += `<div class="cb-row">
+                <div><div class="cb-row-name">${esc(name)}</div><div class="cb-row-sub">${cnText}${data.count} ud${data.count > 1 ? 's' : ''}${discInfo}</div></div>
+                <div class="cb-amount">&euro;${netProduct.toFixed(2)}</div>
+            </div>`;
+        });
+        cbHTML += `<div class="cb-row" style="border-top:1px solid #e0e0ea;margin-top:4px;padding-top:10px;">
+            <div><div class="cb-row-name">Total Bruto</div></div>
+            <div class="cb-amount">&euro;${grandOriginal.toFixed(2)}</div>
+        </div>`;
+        if (grandDiscount > 0) {
+            cbHTML += `<div class="cb-row">
+                <div><div class="cb-row-name">Descuentos por Producto</div><div class="cb-row-sub">Aplicados individualmente</div></div>
+                <div class="cb-amount red">- &euro;${grandDiscount.toFixed(2)}</div>
+            </div>`;
+        }
+        cbHTML += `<div class="cb-row">
+            <div><div class="cb-row-name" style="font-weight:700;">Total Neto</div></div>
+            <div class="cb-amount" style="font-weight:700;font-size:1rem;">&euro;${grandFinal.toFixed(2)}</div>
+        </div>`;
+        document.getElementById('cost-breakdown-rows').innerHTML = cbHTML;
+    }
+}
+
+// Context menu for attendee
+function openContextMenu(e, eventId, idx) {
+    e.stopPropagation();
+    const existing = document.getElementById('ctx-menu');
+    if (existing) existing.remove();
+    const menu = document.createElement('div');
+    menu.id = 'ctx-menu';
+    menu.style.cssText = 'position:fixed;background:white;border:1px solid #e0e0ea;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.12);z-index:200;min-width:160px;padding:4px 0;';
+    menu.innerHTML = `
+        <div onclick="openProductsModal('${eventId}',${idx});document.getElementById('ctx-menu')?.remove();" style="padding:9px 14px;font-size:0.84rem;cursor:pointer;color:#333;display:flex;align-items:center;gap:8px;">📦 Asignar Producto</div>
+        <div onclick="openEditAttendeeModal('${eventId}',${idx});document.getElementById('ctx-menu')?.remove();" style="padding:9px 14px;font-size:0.84rem;cursor:pointer;color:#333;display:flex;align-items:center;gap:8px;">✏️ Editar</div>
+        <div onclick="removeAttendee('${eventId}',${idx});document.getElementById('ctx-menu')?.remove();" style="padding:9px 14px;font-size:0.84rem;cursor:pointer;color:#dc2626;display:flex;align-items:center;gap:8px;">🗑️ Eliminar</div>`;
+    const btn = e.target.closest('button') || e.target;
+    const rect = btn.getBoundingClientRect();
+    menu.style.top = rect.bottom + 4 + 'px';
+    menu.style.right = (window.innerWidth - rect.right) + 'px';
+    document.body.appendChild(menu);
+    setTimeout(() => { document.addEventListener('click', () => menu.remove(), { once: true }); }, 10);
+}
+
+function openInscribirModal() {
+    document.getElementById('client-search').value = '';
+    document.getElementById('attendee-name').value = '';
+    document.getElementById('attendee-phone').value = '';
+    document.getElementById('attendee-time').value = '';
+    document.getElementById('attendee-notes').value = '';
+    document.getElementById('client-suggestions').style.display = 'none';
+    document.getElementById('modal-inscribir').classList.add('active');
+}
+
+function closeInscribirModal() {
+    document.getElementById('client-suggestions').style.display = 'none';
+    document.getElementById('modal-inscribir').classList.remove('active');
+}
+
+function getAllClients() {
+    const seen = new Set();
+    const clients = [];
+    appData.events.forEach(ev => {
+        ev.attendees.forEach(att => {
+            const key = att.name.toLowerCase() + '|' + (att.phone || '');
+            if (!seen.has(key)) {
+                seen.add(key);
+                clients.push({ name: att.name, phone: att.phone || '' });
+            }
+        });
+    });
+    return clients.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function filterClients(q) {
+    const box = document.getElementById('client-suggestions');
+    const all = getAllClients();
+    const matches = q.length === 0
+        ? all
+        : all.filter(c => c.name.toLowerCase().includes(q.toLowerCase()) || c.phone.includes(q));
+    if (matches.length === 0) {
+        box.innerHTML = '<div style="padding:10px 12px;color:#aaa;font-size:0.82rem;">Sin resultados</div>';
+        box.style.display = 'block';
+        return;
+    }
+    box.innerHTML = matches.slice(0, 10).map(c =>
+        `<div class="client-sug-item" data-name="${esc(c.name)}" data-phone="${esc(c.phone)}"
+            style="padding:9px 14px;cursor:pointer;font-size:0.85rem;border-bottom:1px solid #f5f5f8;display:flex;align-items:center;justify-content:space-between;">
+            <strong>${esc(c.name)}</strong>
+            ${c.phone ? `<span style="color:#aaa;font-size:0.78rem;">${esc(c.phone)}</span>` : ''}
+        </div>`
+    ).join('');
+    box.style.display = 'block';
+    box.querySelectorAll('.client-sug-item').forEach(el => {
+        el.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            selectExistingClient(el.dataset.name, el.dataset.phone);
+        });
+        el.addEventListener('mouseover', () => el.style.background = '#f7f7fc');
+        el.addEventListener('mouseout', () => el.style.background = '');
+    });
+}
+
+function selectExistingClient(name, phone) {
+    document.getElementById('attendee-name').value = name;
+    document.getElementById('attendee-phone').value = phone;
+    document.getElementById('client-search').value = name;
+    document.getElementById('client-suggestions').style.display = 'none';
+    document.getElementById('attendee-time').focus();
+}
+
+// Hide suggestions when clicking outside
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('#modal-inscribir')) return;
+    if (!e.target.closest('#client-search') && !e.target.closest('#client-suggestions')) {
+        document.getElementById('client-suggestions').style.display = 'none';
+    }
+});
+
+document.getElementById('btn-add-attendee').addEventListener('click', () => {
+    const event = getSelectedEvent();
+    if (!event) return;
+    const name = document.getElementById('attendee-name').value.trim();
+    const phone = document.getElementById('attendee-phone').value.trim();
+    const time = document.getElementById('attendee-time').value;
+    const notes = document.getElementById('attendee-notes').value.trim();
+    if (!name) return alert('Introduce el nombre de la persona.');
+    event.attendees.push({ name, phone: phone || '', appointmentTime: time || '', attended: null, purchased: false, products: [], notes: notes });
+    saveData(appData);
+    closeInscribirModal();
+    refreshAttendance();
+    refreshEvents();
+});
+
+function markAttendance(eventId, idx, value) {
+    const event = appData.events.find(e => e.id === eventId);
+    if (event) {
+        event.attendees[idx].attended = value;
+        saveData(appData);
+        refreshAttendance();
+        refreshEvents();
+    }
+}
+
+function saveAttNote(eventId, idx, text) {
+    const event = appData.events.find(e => e.id === eventId);
+    if (event && event.attendees[idx]) {
+        event.attendees[idx].notes = text.trim();
+        saveData(appData);
+    }
+}
+
+function removeAttendee(eventId, idx) {
+    if (!confirm('¿Quitar a esta persona del evento?')) return;
+    const event = appData.events.find(e => e.id === eventId);
+    if (event) {
+        event.attendees.splice(idx, 1);
+        saveData(appData);
+        refreshAttendance();
+        refreshEvents();
+    }
+}
+
+// ---- PRODUCTS MODAL: per-product discount, CN search, duplicate products ----
+let modalEventId = null;
+let modalAttIdx = null;
+let modalProductLines = [];
+
+function openProductsModal(eventId, idx) {
+    const event = appData.events.find(e => e.id === eventId);
+    if (!event) return;
+    const att = event.attendees[idx];
+    modalEventId = eventId;
+    modalAttIdx = idx;
+    document.getElementById('modal-attendee-name').textContent = att.name;
+    document.getElementById('product-search-modal').value = '';
+    document.getElementById('product-suggestions').style.display = 'none';
+
+    modalProductLines = getProductItems(att.products).map(p => ({
+        name: p.name,
+        qty: p.qty,
+        discount: p.discount !== undefined ? p.discount : 0
+    }));
+
+    renderModalProducts();
+    document.getElementById('modal-products').classList.add('active');
+}
+
+function renderModalProducts() {
+    const list = document.getElementById('modal-products-list');
+    if (modalProductLines.length === 0) {
+        list.innerHTML = '<p style="color:#aaa;font-size:0.85rem;text-align:center;padding:20px 0;">Sin productos asignados. Usa el buscador de arriba para agregar.</p>';
+    } else {
+        list.innerHTML = modalProductLines.map((line, i) => {
+            const prod = appData.products.find(p => p.name === line.name);
+            const price = prod && prod.price ? Number(prod.price) : 0;
+            const cn = prod && prod.cn ? prod.cn : '';
+            const lineTotal = price * line.qty;
+            const discAmount = lineTotal * (line.discount / 100);
+            const lineFinal = lineTotal - discAmount;
+            return `<div style="padding:10px 0;border-bottom:1px solid #f0f0f5;" data-line-idx="${i}">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-size:0.88rem;font-weight:600;color:#222;">${esc(line.name)}</div>
+                        <div style="font-size:0.73rem;color:#aaa;">${cn ? 'CN: ' + esc(cn) + ' · ' : ''}${price > 0 ? price.toFixed(2) + ' &euro;/ud' : 'Sin precio'}</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:4px;">
+                        <button type="button" onclick="adjustModalLine(${i},-1)" style="width:26px;height:26px;border:1px solid #e0e0ea;border-radius:6px;background:#f4f5fa;cursor:pointer;font-size:1rem;font-weight:700;line-height:1;color:#555;">-</button>
+                        <span style="width:32px;text-align:center;font-size:0.9rem;font-weight:700;color:#222;">${line.qty}</span>
+                        <button type="button" onclick="adjustModalLine(${i},1)" style="width:26px;height:26px;border:1px solid #e0e0ea;border-radius:6px;background:#f4f5fa;cursor:pointer;font-size:1rem;font-weight:700;line-height:1;color:#555;">+</button>
+                    </div>
+                    <button type="button" onclick="removeModalLine(${i})" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:1rem;padding:4px;" title="Quitar">&times;</button>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap;">
+                    <span style="font-size:0.72rem;color:#888;font-weight:600;">Dto:</span>
+                    <div style="display:flex;gap:3px;align-items:center;">
+                        ${[0,5,10,15,20,25].map(d => `<button type="button" onclick="setLineDiscount(${i},${d})" style="padding:2px 7px;border:1px solid ${line.discount === d ? '#5B5FC7' : '#e0e0ea'};border-radius:4px;background:${line.discount === d ? '#eeedff' : '#f8f9fa'};color:${line.discount === d ? '#5B5FC7' : '#999'};font-size:0.72rem;font-weight:600;cursor:pointer;font-family:inherit;">${d}%</button>`).join('')}
+                        <div style="display:flex;align-items:center;gap:2px;margin-left:4px;">
+                            <input type="number" id="custom-disc-${i}" value="${![0,5,10,15,20,25].includes(line.discount) ? line.discount : ''}" min="0" max="100" step="1" placeholder="Otro"
+                                style="width:42px;padding:2px 4px;border:1px solid ${![0,5,10,15,20,25].includes(line.discount) ? '#5B5FC7' : '#e0e0ea'};border-radius:4px;font-size:0.72rem;font-family:inherit;text-align:center;background:${![0,5,10,15,20,25].includes(line.discount) ? '#eeedff' : '#f8f9fa'};color:${![0,5,10,15,20,25].includes(line.discount) ? '#5B5FC7' : '#999'};outline:none;"
+                                onchange="setCustomDiscount(${i},this.value)" onkeydown="if(event.key==='Enter'){setCustomDiscount(${i},this.value);event.preventDefault();}">
+                            <span style="font-size:0.72rem;color:#888;font-weight:600;">%</span>
+                        </div>
+                    </div>
+                    ${price > 0 ? `<span style="font-size:0.78rem;color:#5B5FC7;font-weight:600;margin-left:auto;">${lineFinal.toFixed(2)} &euro;</span>` : ''}
+                </div>
+            </div>`;
+        }).join('');
+    }
+    updateModalTotal();
+}
+
+function adjustModalLine(idx, delta) {
+    modalProductLines[idx].qty = Math.max(1, modalProductLines[idx].qty + delta);
+    renderModalProducts();
+}
+
+function removeModalLine(idx) {
+    modalProductLines.splice(idx, 1);
+    renderModalProducts();
+}
+
+function setLineDiscount(idx, pct) {
+    modalProductLines[idx].discount = pct;
+    renderModalProducts();
+}
+
+function setCustomDiscount(idx, val) {
+    const pct = parseInt(val);
+    if (isNaN(pct) || pct < 0 || pct > 100) return;
+    modalProductLines[idx].discount = pct;
+    renderModalProducts();
+}
+
+function addProductToModal(productName) {
+    modalProductLines.push({ name: productName, qty: 1, discount: 0 });
+    renderModalProducts();
+    document.getElementById('product-search-modal').value = '';
+    document.getElementById('product-suggestions').style.display = 'none';
+}
+
+function updateModalTotal() {
+    let total = 0;
+    modalProductLines.forEach(line => {
+        const prod = appData.products.find(p => p.name === line.name);
+        const price = prod && prod.price ? Number(prod.price) : 0;
+        const lineTotal = price * line.qty;
+        total += lineTotal - (lineTotal * (line.discount / 100));
+    });
+    document.getElementById('modal-total-amount').textContent = total.toFixed(2) + ' €';
+}
+
+// Product search in modal
+document.getElementById('product-search-modal').addEventListener('input', function() {
+    const q = this.value.trim().toLowerCase();
+    const box = document.getElementById('product-suggestions');
+    if (!q) { box.style.display = 'none'; return; }
+    const matches = appData.products.filter(p =>
+        p.name.toLowerCase().includes(q) ||
+        (p.cn && p.cn.toLowerCase().includes(q))
+    );
+    if (matches.length === 0) {
+        box.innerHTML = '<div style="padding:10px 14px;color:#aaa;font-size:0.82rem;">Sin resultados</div>';
+    } else {
+        box.innerHTML = matches.map(p => {
+            const priceStr = p.price ? Number(p.price).toFixed(2) + ' €' : '';
+            return `<div class="prod-sug-item" data-name="${esc(p.name)}"
+                style="padding:9px 14px;cursor:pointer;font-size:0.85rem;border-bottom:1px solid #f5f5f8;display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <strong>${esc(p.name)}</strong>
+                    ${p.cn ? '<span style="color:#aaa;font-size:0.75rem;margin-left:6px;">CN: ' + esc(p.cn) + '</span>' : ''}
+                </div>
+                ${priceStr ? '<span style="color:#5B5FC7;font-weight:600;font-size:0.82rem;">' + priceStr + '</span>' : ''}
+            </div>`;
+        }).join('');
+        box.querySelectorAll('.prod-sug-item').forEach(el => {
+            el.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                addProductToModal(el.dataset.name);
+            });
+            el.addEventListener('mouseover', () => el.style.background = '#f7f7fc');
+            el.addEventListener('mouseout', () => el.style.background = '');
+        });
+    }
+    box.style.display = 'block';
+});
+
+document.getElementById('product-search-modal').addEventListener('blur', function() {
+    setTimeout(() => { document.getElementById('product-suggestions').style.display = 'none'; }, 150);
+});
+
+document.getElementById('btn-modal-close').addEventListener('click', () => {
+    document.getElementById('modal-products').classList.remove('active');
+});
+
+document.getElementById('btn-modal-save').addEventListener('click', () => {
+    const event = appData.events.find(e => e.id === modalEventId);
+    if (!event) return;
+    const att = event.attendees[modalAttIdx];
+    att.products = modalProductLines.filter(l => l.qty > 0).map(l => ({
+        name: l.name, qty: l.qty, discount: l.discount || 0
+    }));
+    att.purchased = att.products.length > 0;
+    saveData(appData);
+    document.getElementById('modal-products').classList.remove('active');
+    refreshAttendance();
+});
+
+// ---- PRODUCTS ----
+document.getElementById('btn-add-product').addEventListener('click', () => {
+    const name = document.getElementById('product-name').value.trim();
+    const cn = document.getElementById('product-cn').value.trim();
+    const price = document.getElementById('product-price').value;
+    if (!name) return alert('Introduce el nombre del producto.');
+    appData.products.push({ name, cn: cn || '', price: price || '' });
+    saveData(appData);
+    document.getElementById('product-name').value = '';
+    document.getElementById('product-cn').value = '';
+    document.getElementById('product-price').value = '';
+    refreshProducts();
+});
+
+const productIcons = ['💊', '🧴', '✂️', '🌿', '💧', '✨', '🫧', '🪮'];
+const productCategories = ['Gama Profesional', 'Cuidado Diario', 'Reparación Profunda', 'Acabado y Brillo', 'Tratamiento', 'Estimulante Folicular'];
+
+function refreshProducts() {
+    const tbody = document.getElementById('products-table-body');
+    const noP = document.getElementById('no-products');
+    const countBadge = document.getElementById('products-count-badge');
+    tbody.innerHTML = '';
+    countBadge.textContent = 'Mostrando ' + appData.products.length + ' productos';
+
+    if (appData.products.length === 0) {
+        noP.style.display = 'block';
+        return;
+    }
+    noP.style.display = 'none';
+
+    appData.products.forEach((p, idx) => {
+        const icon = productIcons[idx % productIcons.length];
+        const cat = productCategories[idx % productCategories.length];
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>
+                <div class="product-cell">
+                    <div class="product-icon">${icon}</div>
+                    <div>
+                        <div class="product-name">${esc(p.name)}</div>
+                        <div class="product-sub">${cat}</div>
+                    </div>
+                </div>
+            </td>
+            <td style="color:#666;font-size:0.85rem;">${p.cn ? esc(p.cn) : '—'}</td>
+            <td>
+                <span id="price-display-${idx}" onclick="startEditPrice(${idx})" style="cursor:pointer;" title="Haz clic para editar el precio">
+                    <strong>${p.price ? Number(p.price).toFixed(2) + ' €' : '—'}</strong>
+                    <span style="color:#bbb;font-size:0.75rem;margin-left:4px;">✏️</span>
+                </span>
+                <div id="price-edit-${idx}" style="display:none;align-items:center;gap:4px;">
+                    <input type="number" id="price-input-${idx}" value="${p.price ? Number(p.price).toFixed(2) : ''}" step="0.01" min="0" placeholder="0.00"
+                        style="width:80px;padding:4px 6px;border:1.5px solid #5B5FC7;border-radius:6px;font-size:0.85rem;font-family:inherit;outline:none;"
+                        onkeydown="if(event.key==='Enter')saveProductPrice(${idx});if(event.key==='Escape')cancelEditPrice(${idx});">
+                    <button onclick="saveProductPrice(${idx})" style="background:#5B5FC7;color:white;border:none;border-radius:5px;padding:4px 8px;cursor:pointer;font-size:0.78rem;font-weight:600;">✓</button>
+                    <button onclick="cancelEditPrice(${idx})" style="background:#f4f5fa;color:#666;border:1px solid #e0e0ea;border-radius:5px;padding:4px 8px;cursor:pointer;font-size:0.78rem;font-weight:600;">✗</button>
+                </div>
+            </td>
+            <td>
+                <button onclick="deleteProduct(${idx})"
+                    style="background:none;border:none;cursor:pointer;color:#ccc;font-size:1.1rem;padding:4px 8px;border-radius:4px;transition:color 0.15s;"
+                    onmouseover="this.style.color='#dc2626'" onmouseout="this.style.color='#ccc'">🗑</button>
+            </td>`;
+        tbody.appendChild(tr);
+    });
+}
+
+function deleteProduct(idx) {
+    if (!confirm('¿Eliminar este producto del catálogo?')) return;
+    appData.products.splice(idx, 1);
+    saveData(appData);
+    refreshProducts();
+}
+
+function startEditPrice(idx) {
+    document.getElementById('price-display-' + idx).style.display = 'none';
+    document.getElementById('price-edit-' + idx).style.display = 'flex';
+    const input = document.getElementById('price-input-' + idx);
+    input.focus();
+    input.select();
+}
+
+function cancelEditPrice(idx) {
+    document.getElementById('price-display-' + idx).style.display = '';
+    document.getElementById('price-edit-' + idx).style.display = 'none';
+}
+
+function saveProductPrice(idx) {
+    const input = document.getElementById('price-input-' + idx);
+    const val = parseFloat(input.value);
+    if (isNaN(val) || val < 0) {
+        alert('Por favor, introduce un precio válido.');
+        return;
+    }
+    appData.products[idx].price = val;
+    saveData(appData);
+    refreshProducts();
+    // Propagar el precio nuevo al resto de secciones
+    if (getSelectedEvent()) refreshAttendance();
+    refreshStats();
+}
+
+// ---- STATS (Fix 1: exclude en preparación, Fix 5: ver todos, Fix 6: charts) ----
+let statsShowAll = false;
+
+function toggleVerTodos() {
+    statsShowAll = !statsShowAll;
+    const btn = document.getElementById('btn-ver-todos');
+    if (btn) btn.textContent = statsShowAll ? 'Ver menos' : 'Ver todos';
+    refreshStats();
+}
+
+function refreshStats() {
+    const today = new Date().toISOString().split('T')[0];
+    // Fix 1: Only include events that have happened (date <= today) or are closed
+    const statsEvents = appData.events.filter(ev => ev.closed || ev.date <= today);
+    const enPrep = appData.events.length - statsEvents.length;
+
+    let totalInscritos = 0, totalAsistieron = 0, totalCompraron = 0, totalIngresos = 0;
+    statsEvents.forEach(ev => {
+        totalInscritos += ev.attendees.length;
+        totalAsistieron += ev.attendees.filter(a => a.attended).length;
+        totalCompraron += ev.attendees.filter(a => a.purchased).length;
+        ev.attendees.forEach(att => {
+            getProductItems(att.products).forEach(item => {
+                const prod = appData.products.find(p => p.name === item.name);
+                if (prod && prod.price) {
+                    const bruto = Number(prod.price) * item.qty;
+                    // Restar el dto. de la línea para que cuadre con el resumen del evento y el PDF
+                    totalIngresos += bruto - (bruto * ((item.discount || 0) / 100));
+                }
+            });
+        });
+    });
+    const pctGlobal = totalInscritos > 0 ? ((totalAsistieron / totalInscritos) * 100).toFixed(1) : '0';
+    const pctCompra = totalAsistieron > 0 ? ((totalCompraron / totalAsistieron) * 100).toFixed(1) : '0';
+
+    // Fix 6: Real data in stat cards (no hardcoded badges)
+    document.getElementById('global-stats').innerHTML = `
+        <div class="stat-card">
+            <div class="s-label">Eventos Activos</div>
+            <div class="s-value">${statsEvents.length}</div>
+            <div class="s-badge" style="color:#aaa;">${enPrep > 0 ? enPrep + ' en preparación' : 'Todos activos'}</div>
+        </div>
+        <div class="stat-card">
+            <div class="s-label">Personas Registradas</div>
+            <div class="s-value">${totalInscritos.toLocaleString()}</div>
+            <div class="s-badge" style="color:#aaa;">${totalAsistieron} asistieron</div>
+        </div>
+        <div class="stat-card">
+            <div class="s-label">Ingresos Estimados</div>
+            <div class="s-value" style="font-size:1.3rem;">€${totalIngresos.toFixed(0)}</div>
+            <div class="s-badge" style="color:#aaa;">${totalCompraron} compradores</div>
+        </div>
+        <div class="stat-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                <div class="s-label" style="margin-bottom:0;">Asistencia Global</div>
+                <span style="font-size:0.95rem;font-weight:700;color:#5B5FC7;">${pctGlobal}%</span>
+            </div>
+            <div class="progress-bar-container" style="height:7px;">
+                <div class="progress-bar-fill" style="width:${pctGlobal}%;"></div>
+            </div>
+            <div style="font-size:0.72rem;color:#aaa;margin-top:5px;">Tasa de compra: ${pctCompra}%</div>
+        </div>`;
+
+    // Fix 6: Draw real chart
+    drawAttendanceChart(statsEvents);
+
+    // Fix 5: Stats table with "ver todos" toggle
+    const tbody = document.getElementById('stats-table-body');
+    tbody.innerHTML = '';
+    const displayEvents = statsShowAll ? statsEvents : statsEvents.slice(0, 5);
+    displayEvents.forEach(ev => {
+        const total = ev.attendees.length;
+        const att = ev.attendees.filter(a => a.attended).length;
+        const pct = total > 0 ? Math.round((att / total) * 100) : 0;
+        let statusBadge;
+        if (ev.closed) statusBadge = '<span class="badge badge-closed">Finalizado</span>';
+        else if (pct === 100 && total > 0) statusBadge = '<span class="badge badge-success">Completado</span>';
+        else statusBadge = '<span class="badge badge-info">En Curso</span>';
+
+        const barColor = pct > 70 ? '#22c55e' : '#5B5FC7';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><strong>${esc(ev.name)}</strong></td>
+            <td>${total.toLocaleString()}</td>
+            <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <div class="progress-bar-container" style="width:80px;height:5px;display:inline-block;">
+                        <div class="progress-bar-fill" style="width:${pct}%;background:${barColor};"></div>
+                    </div>
+                    <span style="font-size:0.82rem;font-weight:600;">${pct}%</span>
+                </div>
+            </td>
+            <td>${statusBadge}</td>`;
+        tbody.appendChild(tr);
+    });
+
+    const btnVerTodos = document.getElementById('btn-ver-todos');
+    if (btnVerTodos) {
+        btnVerTodos.style.display = statsEvents.length > 5 ? '' : 'none';
+        if (!statsShowAll && statsEvents.length > 5) btnVerTodos.textContent = 'Ver todos (' + statsEvents.length + ')';
+    }
+
+    // Top products (Fix 2: count by qty)
+    const productCount = {};
+    statsEvents.forEach(ev => {
+        ev.attendees.forEach(a => {
+            getProductItems(a.products).forEach(item => {
+                productCount[item.name] = (productCount[item.name] || 0) + item.qty;
+            });
+        });
+    });
+    const sorted = Object.entries(productCount).sort((a, b) => b[1] - a[1]);
+    const tpList = document.getElementById('top-products-list');
+    const noPS = document.getElementById('no-products-stats');
+    tpList.innerHTML = '';
+
+    if (sorted.length === 0) {
+        noPS.style.display = 'block';
+    } else {
+        noPS.style.display = 'none';
+        const maxCount = sorted[0][1];
+        sorted.slice(0, 5).forEach(([name, count], i) => {
+            const barPct = maxCount > 0 ? Math.round((count / maxCount) * 100) : 0;
+            const prod = appData.products.find(p => p.name === name);
+            const sub = prod && prod.cn ? 'CN: ' + prod.cn : (prod ? 'Gama Profesional' : '');
+            const item = document.createElement('div');
+            item.className = 'tp-item';
+            item.innerHTML = `
+                <div class="tp-rank">${i + 1}</div>
+                <div class="tp-info">
+                    <div class="tp-name">${esc(name)}</div>
+                    ${sub ? `<div class="tp-sub">${esc(sub)}</div>` : ''}
+                    <div class="tp-bar-wrap"><div class="tp-bar-fill" style="width:${barPct}%"></div></div>
+                </div>
+                <div class="tp-count">${count}</div>`;
+            tpList.appendChild(item);
+        });
+    }
+}
+
+// Fix 6: Canvas bar chart for attendance per event
+function drawAttendanceChart(events) {
+    const canvas = document.getElementById('chart-attendance');
+    const placeholder = document.getElementById('chart-placeholder');
+    if (!canvas) return;
+
+    if (events.length === 0) {
+        canvas.style.display = 'none';
+        if (placeholder) placeholder.style.display = 'block';
+        return;
+    }
+    canvas.style.display = 'block';
+    if (placeholder) placeholder.style.display = 'none';
+
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const w = (canvas.parentElement.clientWidth - 40) || 600;
+    const h = 200;
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, w, h);
+
+    const pad = { top: 20, right: 20, bottom: 48, left: 42 };
+    const chartW = w - pad.left - pad.right;
+    const chartH = h - pad.top - pad.bottom;
+    const displayEvents = events.slice(-10);
+    const maxVal = Math.max(...displayEvents.map(ev => ev.attendees.length), 1);
+    const barGap = chartW / displayEvents.length;
+    const barWidth = Math.min(barGap * 0.55, 40);
+
+    // Grid lines + Y labels
+    ctx.strokeStyle = '#f0f0f5';
+    ctx.lineWidth = 1;
+    ctx.fillStyle = '#bbb';
+    ctx.font = '10px Inter,sans-serif';
+    ctx.textAlign = 'right';
+    for (let i = 0; i <= 4; i++) {
+        const y = pad.top + (chartH / 4) * i;
+        ctx.beginPath();
+        ctx.moveTo(pad.left, y);
+        ctx.lineTo(pad.left + chartW, y);
+        ctx.stroke();
+        ctx.fillText(Math.round(maxVal * (4 - i) / 4), pad.left - 6, y + 4);
+    }
+
+    // Bars
+    displayEvents.forEach((ev, i) => {
+        const total = ev.attendees.length;
+        const attended = ev.attendees.filter(a => a.attended).length;
+        const x = pad.left + i * barGap + (barGap - barWidth) / 2;
+
+        if (total > 0) {
+            const totalBarH = (total / maxVal) * chartH;
+            ctx.fillStyle = '#eeedff';
+            ctx.beginPath();
+            if (ctx.roundRect) ctx.roundRect(x, pad.top + chartH - totalBarH, barWidth, totalBarH, [4, 4, 0, 0]);
+            else ctx.rect(x, pad.top + chartH - totalBarH, barWidth, totalBarH);
+            ctx.fill();
+
+            if (attended > 0) {
+                const attBarH = (attended / maxVal) * chartH;
+                ctx.fillStyle = '#5B5FC7';
+                ctx.beginPath();
+                if (ctx.roundRect) ctx.roundRect(x, pad.top + chartH - attBarH, barWidth, attBarH, [4, 4, 0, 0]);
+                else ctx.rect(x, pad.top + chartH - attBarH, barWidth, attBarH);
+                ctx.fill();
+            }
+
+            // Value on top
+            ctx.fillStyle = '#5B5FC7';
+            ctx.font = 'bold 10px Inter,sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(total, x + barWidth / 2, pad.top + chartH - totalBarH - 4);
+        }
+
+        // Event label
+        ctx.fillStyle = '#999';
+        ctx.font = '10px Inter,sans-serif';
+        ctx.textAlign = 'center';
+        const label = ev.name.length > 9 ? ev.name.substring(0, 9) + '…' : ev.name;
+        ctx.fillText(label, x + barWidth / 2, h - pad.bottom + 14);
+    });
+}
+
+// ---- PHONES ----
+document.getElementById('phone-search').addEventListener('input', refreshPhones);
+
+function refreshPhones() {
+    const search = document.getElementById('phone-search').value.trim().toLowerCase();
+    const tbody = document.getElementById('phones-table-body');
+    const noPhones = document.getElementById('no-phones');
+    tbody.innerHTML = '';
+
+    const contactMap = {};
+    appData.events.forEach(ev => {
+        ev.attendees.forEach(att => {
+            const key = att.name.toLowerCase();
+            if (!contactMap[key]) {
+                contactMap[key] = { name: att.name, phone: att.phone || '', events: [] };
+            }
+            contactMap[key].events.push(ev.name);
+            if (att.phone && !contactMap[key].phone) contactMap[key].phone = att.phone;
+        });
+    });
+
+    let contacts = Object.values(contactMap);
+    if (search) {
+        contacts = contacts.filter(c =>
+            c.name.toLowerCase().includes(search) ||
+            c.phone.toLowerCase().includes(search)
+        );
+    }
+    contacts.sort((a, b) => a.name.localeCompare(b.name));
+
+    const total = Object.keys(contactMap).length;
+    document.getElementById('phones-count-text').textContent = `Mostrando ${contacts.length} de ${total} contactos`;
+
+    if (contacts.length === 0) {
+        noPhones.style.display = 'block';
+        return;
+    }
+    noPhones.style.display = 'none';
+
+    contacts.forEach((c, idx) => {
+        const initials = c.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+        const aColor = avatarColors[idx % avatarColors.length];
+        const eventTags = [...new Set(c.events)].map(e => `<span class="event-tag">${esc(e)}</span>`).join(' ');
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>
+                <div class="attendee-cell">
+                    <div class="avatar ${aColor}">${initials}</div>
+                    <strong>${esc(c.name)}</strong>
+                </div>
+            </td>
+            <td style="color:#555;">${c.phone ? esc(c.phone) : '<span style="color:#ccc;font-style:italic;">Sin teléfono</span>'}</td>
+            <td><div style="display:flex;flex-wrap:wrap;gap:4px;">${eventTags}</div></td>
+            <td style="display:flex;gap:6px;align-items:center;">
+                <button onclick="editPhone('${esc(c.name.replace(/'/g, "\\'"))}')"
+                    style="background:none;border:none;color:#5B5FC7;font-size:0.82rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;font-family:inherit;">
+                    ✏️ Editar
+                </button>
+                <button onclick="deleteContact('${esc(c.name.replace(/'/g, "\\'"))}')"
+                    style="background:none;border:none;color:#ccc;font-size:1rem;cursor:pointer;padding:4px 6px;border-radius:4px;transition:color 0.15s;"
+                    onmouseover="this.style.color='#dc2626'" onmouseout="this.style.color='#ccc'" title="Eliminar contacto">
+                    🗑
+                </button>
+            </td>`;
+        tbody.appendChild(tr);
+    });
+}
+
+function deleteContact(name) {
+    if (!confirm('¿Eliminar a ' + name + ' de todos los eventos? Esta acción no se puede deshacer.')) return;
+    appData.events.forEach(ev => {
+        ev.attendees = ev.attendees.filter(att => att.name.toLowerCase() !== name.toLowerCase());
+    });
+    saveData(appData);
+    refreshPhones();
+    refreshAttendance();
+    refreshEvents();
+}
+
+function editPhone(name) {
+    const newPhone = prompt('Introduce el teléfono para ' + name + ':');
+    if (newPhone === null) return;
+    appData.events.forEach(ev => {
+        ev.attendees.forEach(att => {
+            if (att.name.toLowerCase() === name.toLowerCase()) att.phone = newPhone.trim();
+        });
+    });
+    saveData(appData);
+    refreshPhones();
+    refreshAttendance();
+}
+
+// ---- HISTORIAL DE ASISTENCIA ----
+let historialFilter = 'todos';
+
+function setHistorialFilter(filter) {
+    historialFilter = filter;
+    document.querySelectorAll('.hist-chip').forEach(btn => {
+        const isActive = btn.dataset.filter === filter;
+        btn.style.background = isActive ? '#5B5FC7' : 'white';
+        btn.style.color = isActive ? 'white' : '#666';
+    });
+    refreshHistorial();
+}
+
+function calcSegment(person, totalEvents) {
+    const now = new Date();
+    const daysSinceLast = person.lastDate ? Math.floor((now - new Date(person.lastDate)) / 86400000) : 999;
+    const freq = person.asistido.length;
+    const purchases = person.totalProducts;
+    const totalEv = Math.max(totalEvents, 1);
+
+    // Recency score (0-100): lower days = higher score
+    const recency = daysSinceLast <= 30 ? 100 : daysSinceLast <= 90 ? 75 : daysSinceLast <= 180 ? 50 : daysSinceLast <= 365 ? 25 : 0;
+    // Frequency score (0-100)
+    const frequency = Math.min(100, Math.round((freq / totalEv) * 100));
+    // Monetary score (0-100)
+    const monetary = purchases >= 10 ? 100 : purchases >= 5 ? 75 : purchases >= 3 ? 50 : purchases >= 1 ? 25 : 0;
+
+    const score = Math.round(recency * 0.4 + frequency * 0.3 + monetary * 0.3);
+
+    let segment, segIcon, segColor, segBg, priority, prioIcon, prioColor;
+
+    const inscritoCount = person.inscrito.length;
+    const attRate = inscritoCount > 0 ? freq / inscritoCount : 0;
+
+    if (freq === 0) {
+        segment = 'nuevo'; segIcon = '🆕'; segColor = '#6366f1'; segBg = '#eef2ff';
+        priority = 'Media'; prioIcon = '📞'; prioColor = '#f59e0b';
+    } else if (attRate >= 0.9) {
+        segment = 'siempre'; segIcon = '⭐'; segColor = '#b45309'; segBg = '#fffbeb';
+        priority = 'Baja'; prioIcon = '✅'; prioColor = '#22c55e';
+    } else if (attRate >= 0.5) {
+        segment = 'regular'; segIcon = '💚'; segColor = '#166534'; segBg = '#dcfce7';
+        priority = 'Baja'; prioIcon = '✅'; prioColor = '#22c55e';
+    } else if (attRate > 0) {
+        segment = 'poco'; segIcon = '⚠️'; segColor = '#92400e'; segBg = '#fef3c7';
+        priority = 'Alta'; prioIcon = '📱'; prioColor = '#f59e0b';
+    } else {
+        segment = 'no_asiste'; segIcon = '🔴'; segColor = '#991b1b'; segBg = '#fef2f2';
+        priority = 'Urgente'; prioIcon = '🔥'; prioColor = '#dc2626';
+    }
+
+    if (inscritoCount >= 2 && freq === 0) {
+        segment = 'no_asiste'; segIcon = '🔴'; segColor = '#991b1b'; segBg = '#fef2f2';
+        priority = 'Urgente'; prioIcon = '🔥'; prioColor = '#dc2626';
+    }
+
+    if (freq >= 1 && purchases === 0 && segment !== 'no_asiste') {
+        segment = 'no_compra'; segIcon = '🛒'; segColor = '#7c3aed'; segBg = '#f5f3ff';
+        priority = 'Alta'; prioIcon = '📱'; prioColor = '#f59e0b';
+    }
+
+    return { segment, segIcon, segColor, segBg, priority, prioIcon, prioColor, score, daysSinceLast, recency, frequency, monetary };
+}
+
+function refreshHistorial() {
+    const search = document.getElementById('historial-search').value.trim().toLowerCase();
+    const tbody = document.getElementById('historial-table-body');
+    const noHist = document.getElementById('no-historial');
+    tbody.innerHTML = '';
+
+    const personMap = {};
+    const eventsByDate = appData.events.slice().sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+
+    appData.events.forEach(ev => {
+        ev.attendees.forEach(att => {
+            const key = (att.name || '').trim().toLowerCase() + '||' + (att.phone || '').trim();
+            if (!personMap[key]) {
+                personMap[key] = {
+                    name: att.name,
+                    phone: att.phone || '',
+                    inscrito: [],
+                    asistido: [],
+                    lastDate: null,
+                    totalProducts: 0,
+                    totalSpent: 0
+                };
+            }
+            personMap[key].inscrito.push(ev.name);
+            if (att.attended === true) {
+                personMap[key].asistido.push(ev.name);
+                if (!personMap[key].lastDate || (ev.date && ev.date > personMap[key].lastDate)) {
+                    personMap[key].lastDate = ev.date;
+                }
+            }
+            const prods = getProductItems(att.products);
+            prods.forEach(item => {
+                personMap[key].totalProducts += item.qty;
+                const prod = appData.products.find(p => p.name === item.name);
+                const price = prod && prod.price ? Number(prod.price) : 0;
+                const lineTotal = price * item.qty;
+                personMap[key].totalSpent += lineTotal - (lineTotal * ((item.discount || 0) / 100));
+            });
+            if (att.phone && !personMap[key].phone) personMap[key].phone = att.phone;
+        });
+    });
+
+    const totalEvents = appData.events.length;
+    let persons = Object.values(personMap);
+    persons.forEach(p => {
+        p.seg = calcSegment(p, totalEvents);
+    });
+
+    // Segment summary cards
+    const segCounts = { siempre: 0, regular: 0, poco: 0, no_asiste: 0, nuevo: 0, no_compra: 0 };
+    persons.forEach(p => { if (segCounts[p.seg.segment] !== undefined) segCounts[p.seg.segment]++; });
+    const segCards = document.getElementById('historial-segment-cards');
+    const segDefs = [
+        { key: 'siempre', icon: '⭐', label: 'Asiste siempre', color: '#b45309', bg: '#fffbeb', border: '#fde68a' },
+        { key: 'regular', icon: '💚', label: 'Con regularidad', color: '#166534', bg: '#dcfce7', border: '#bbf7d0' },
+        { key: 'poco', icon: '⚠️', label: 'Asiste poco', color: '#92400e', bg: '#fef3c7', border: '#fde68a' },
+        { key: 'no_asiste', icon: '🔴', label: 'No asiste', color: '#991b1b', bg: '#fef2f2', border: '#fecaca' },
+        { key: 'nuevo', icon: '🆕', label: 'Nuevo', color: '#6366f1', bg: '#eef2ff', border: '#c7d2fe' },
+        { key: 'no_compra', icon: '🛒', label: 'No compra', color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe' }
+    ];
+    segCards.innerHTML = segDefs.map(s => {
+        const isActive = historialFilter === s.key;
+        const activeStyle = isActive ? 'box-shadow:0 0 0 2px ' + s.color + ';transform:scale(1.03);' : '';
+        return '<div onclick="setHistorialFilter(\'' + s.key + '\')" style="cursor:pointer;background:' + s.bg + ';border:1.5px solid ' + s.border + ';border-radius:10px;padding:14px 16px;text-align:center;transition:transform 0.15s,box-shadow 0.15s;' + activeStyle + '">' +
+            '<div style="font-size:1.5rem;">' + s.icon + '</div>' +
+            '<div style="font-size:1.2rem;font-weight:700;color:' + s.color + ';margin-top:2px;">' + segCounts[s.key] + '</div>' +
+            '<div style="font-size:0.75rem;font-weight:600;color:' + s.color + ';opacity:0.8;">' + s.label + '</div>' +
+        '</div>';
+    }).join('');
+
+    if (search) {
+        persons = persons.filter(p =>
+            p.name.toLowerCase().includes(search) ||
+            p.phone.toLowerCase().includes(search)
+        );
+    }
+    if (historialFilter !== 'todos') {
+        persons = persons.filter(p => p.seg.segment === historialFilter);
+    }
+
+    // Sort: highest priority first (urgente > alta > media > baja), then by score descending
+    // OJO: 'Urgente' vale 0, que es falsy -> hay que usar ?? y no || o se ordenaría al final
+    const prioOrder = { 'Urgente': 0, 'Alta': 1, 'Media': 2, 'Baja': 3 };
+    persons.sort((a, b) => (prioOrder[a.seg.priority] ?? 9) - (prioOrder[b.seg.priority] ?? 9) || b.seg.score - a.seg.score);
+
+    if (persons.length === 0) {
+        noHist.style.display = 'block';
+        return;
+    }
+    noHist.style.display = 'none';
+
+    persons.forEach((p, idx) => {
+        const initials = p.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+        const aColor = avatarColors[idx % avatarColors.length];
+        const s = p.seg;
+        const pct = p.inscrito.length > 0 ? Math.round((p.asistido.length / p.inscrito.length) * 100) : 0;
+        const barColor = pct >= 75 ? '#22c55e' : pct >= 50 ? '#f59e0b' : '#ef4444';
+
+        let lastVisitText;
+        if (!p.lastDate) {
+            lastVisitText = '<span style="color:#ccc;font-style:italic;">Nunca</span>';
+        } else if (s.daysSinceLast === 0) {
+            lastVisitText = 'Hoy';
+        } else if (s.daysSinceLast === 1) {
+            lastVisitText = 'Ayer';
+        } else if (s.daysSinceLast <= 30) {
+            lastVisitText = 'Hace ' + s.daysSinceLast + ' días';
+        } else if (s.daysSinceLast <= 365) {
+            const months = Math.floor(s.daysSinceLast / 30);
+            lastVisitText = 'Hace ' + months + (months === 1 ? ' mes' : ' meses');
+        } else {
+            lastVisitText = 'Hace más de 1 año';
+        }
+
+        const eventDetails = p.inscrito.map(evName => {
+            const asistio = p.asistido.includes(evName);
+            return `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:4px;font-size:0.73rem;font-weight:500;background:${asistio ? '#dcfce7' : '#fef2f2'};color:${asistio ? '#166534' : '#991b1b'};margin:2px;">${asistio ? '✓' : '✗'} ${esc(evName)}</span>`;
+        }).join('');
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>
+                <div class="attendee-cell">
+                    <div class="avatar ${aColor}">${initials}</div>
+                    <strong>${esc(p.name)}</strong>
+                </div>
+            </td>
+            <td style="color:#555;">${p.phone ? esc(p.phone) : '<span style="color:#ccc;font-style:italic;">Sin teléfono</span>'}</td>
+            <td>
+                <span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;background:${s.segBg};color:${s.segColor};font-size:0.78rem;font-weight:600;">
+                    ${s.segIcon} ${{siempre:'Asiste siempre',regular:'Con regularidad',poco:'Asiste poco',no_asiste:'No asiste',nuevo:'Nuevo',no_compra:'No compra'}[s.segment] || s.segment}
+                </span>
+            </td>
+            <td>
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <span style="font-size:0.95rem;">${s.prioIcon}</span>
+                    <span style="font-size:0.8rem;font-weight:700;color:${s.prioColor};">${s.priority}</span>
+                </div>
+            </td>
+            <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <strong style="font-size:1rem;color:#222;">${p.asistido.length}</strong>
+                    <span style="font-size:0.78rem;color:#888;">de ${p.inscrito.length}</span>
+                    <div style="flex:1;max-width:60px;height:6px;background:#f0f0f5;border-radius:3px;overflow:hidden;">
+                        <div style="width:${pct}%;height:100%;background:${barColor};border-radius:3px;"></div>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <div style="font-size:0.85rem;color:#222;font-weight:600;">${p.totalProducts} uds</div>
+                <div style="font-size:0.73rem;color:#888;">${p.totalSpent.toFixed(2)} €</div>
+            </td>
+            <td style="font-size:0.82rem;color:#555;">${lastVisitText}</td>
+            <td><div style="display:flex;flex-wrap:wrap;gap:2px;">${eventDetails}</div></td>`;
+        tbody.appendChild(tr);
+    });
+}
+
+// ---- EXPORT PDF POR EVENTO (desde Asistencia) ----
+function exportEventPDF() {
+    const event = getSelectedEvent();
+    if (!event) return alert('Selecciona un evento primero.');
+
+    const total = event.attendees.length;
+    const attended = event.attendees.filter(a => a.attended).length;
+    const notAttended = event.attendees.filter(a => a.attended === false).length;
+    const pending = event.attendees.filter(a => a.attended === null).length;
+    const pctAtt = total > 0 ? ((attended / total) * 100).toFixed(1) : '0';
+
+    const buyers = event.attendees.filter(a => getProductItems(a.products).length > 0);
+    let grandOriginal = 0, grandDiscount = 0, grandFinal = 0;
+    const productTotals = {};
+
+    buyers.forEach(att => {
+        const prods = getProductItems(att.products);
+        prods.forEach(item => {
+            const prod = appData.products.find(p => p.name === item.name);
+            const price = prod && prod.price ? Number(prod.price) : 0;
+            const lineTotal = price * item.qty;
+            const disc = lineTotal * ((item.discount || 0) / 100);
+            grandOriginal += lineTotal;
+            grandDiscount += disc;
+            grandFinal += lineTotal - disc;
+            if (!productTotals[item.name]) productTotals[item.name] = { qty: 0, total: 0 };
+            productTotals[item.name].qty += item.qty;
+            productTotals[item.name].total += lineTotal;
+        });
+    });
+
+    const status = event.closed ? 'Finalizado' : 'En Curso';
+    const dateStr = formatDate(event.date) + (event.time ? ' · ' + event.time : '');
+
+    let html = `
+        <div class="pr-header">
+            <h1>${esc(event.name)}</h1>
+            <p>${dateStr} &nbsp;·&nbsp; ${status}</p>
+        </div>
+
+        <div class="pr-section-title">Resumen del Evento</div>
+        <div class="pr-stats-grid">
+            <div class="pr-stat-box">
+                <div class="pr-stat-label">Total inscritos</div>
+                <div class="pr-stat-value">${total}</div>
+            </div>
+            <div class="pr-stat-box">
+                <div class="pr-stat-label">Asistieron</div>
+                <div class="pr-stat-value">${attended}</div>
+            </div>
+            <div class="pr-stat-box">
+                <div class="pr-stat-label">Tasa de asistencia</div>
+                <div class="pr-stat-value">${pctAtt}%</div>
+            </div>
+            <div class="pr-stat-box">
+                <div class="pr-stat-label">No asistieron</div>
+                <div class="pr-stat-value">${notAttended}</div>
+            </div>
+            <div class="pr-stat-box">
+                <div class="pr-stat-label">Compradores</div>
+                <div class="pr-stat-value">${buyers.length}</div>
+            </div>
+            <div class="pr-stat-box">
+                <div class="pr-stat-label">Ingresos netos</div>
+                <div class="pr-stat-value">€${grandFinal.toFixed(2)}</div>
+            </div>
+        </div>`;
+
+    // Desglose de ventas
+    if (Object.keys(productTotals).length > 0) {
+        html += `<div class="pr-section-title">Desglose de Ventas</div>
+        <table class="pr-table">
+            <colgroup><col style="width:55%"><col style="width:15%"><col style="width:15%"><col style="width:15%"></colgroup>
+            <thead><tr><th>Producto</th><th>CN</th><th style="text-align:center;">Uds.</th><th style="text-align:right;">Total bruto</th></tr></thead>
+            <tbody>`;
+        Object.entries(productTotals).sort((a,b) => b[1].qty - a[1].qty).forEach(([name, data]) => {
+            const prodRef = appData.products.find(p => p.name === name);
+            const cn = prodRef && prodRef.cn ? esc(prodRef.cn) : '—';
+            html += `<tr>
+                <td>${esc(name)}</td>
+                <td>${cn}</td>
+                <td style="text-align:center;">${data.qty}</td>
+                <td style="text-align:right;">€${data.total.toFixed(2)}</td>
+            </tr>`;
+        });
+        html += `</tbody>
+            <tfoot>
+                <tr><td colspan="3"><strong>Total Bruto</strong></td><td style="text-align:right;"><strong>€${grandOriginal.toFixed(2)}</strong></td></tr>
+                <tr><td colspan="3">Descuentos aplicados</td><td style="text-align:right;color:#dc2626;">− €${grandDiscount.toFixed(2)}</td></tr>
+                <tr><td colspan="3"><strong>Total Neto</strong></td><td style="text-align:right;"><strong>€${grandFinal.toFixed(2)}</strong></td></tr>
+            </tfoot>
+        </table>`;
+    }
+
+    // Lista completa de asistentes
+    html += `<div class="pr-section-title">Lista de Asistentes</div>
+    <table class="pr-table">
+        <thead><tr><th>Nombre</th><th>Telefono</th><th>Hora Cita</th><th>Asistencia</th><th>Anotaciones</th><th>Productos</th></tr></thead>
+        <tbody>`;
+
+    event.attendees.forEach(att => {
+        const attLabel = att.attended === true
+            ? '<span class="pr-att-yes">Asistio</span>'
+            : att.attended === false
+                ? '<span class="pr-att-no">No asistio</span>'
+                : '<span class="pr-att-pend">Pendiente</span>';
+        const prods = getProductItems(att.products).map(p => {
+            let s = p.name + (p.qty > 1 ? ' x' + p.qty : '');
+            if (p.discount > 0) s += ' (-' + p.discount + '%)';
+            return s;
+        }).join(', ') || '—';
+        html += `<tr>
+            <td><strong>${esc(att.name)}</strong></td>
+            <td>${att.phone ? esc(att.phone) : '—'}</td>
+            <td>${att.appointmentTime || '—'}</td>
+            <td>${attLabel}</td>
+            <td>${att.notes ? esc(att.notes) : '—'}</td>
+            <td>${esc(prods)}</td>
+        </tr>`;
+    });
+
+    html += `</tbody></table>
+        <div class="pr-footer">GESTOR DE EVENTOS · ${esc(event.name)} · ${dateStr}</div>`;
+
+    document.getElementById('print-report').innerHTML = html;
+    window.print();
+}
+
+// ---- PDF EXPORT GLOBAL (Fix 7) — usa window.print(), funciona sin internet ni servidor ----
+function exportToPDF() {
+    const today = new Date().toISOString().split('T')[0];
+    const statsEvents = appData.events.filter(ev => ev.closed || ev.date <= today);
+
+    let totalInscritos = 0, totalAsistieron = 0, totalCompraron = 0, totalIngresos = 0;
+    statsEvents.forEach(ev => {
+        totalInscritos += ev.attendees.length;
+        totalAsistieron += ev.attendees.filter(a => a.attended).length;
+        totalCompraron += ev.attendees.filter(a => a.purchased).length;
+        ev.attendees.forEach(att => {
+            getProductItems(att.products).forEach(item => {
+                const prod = appData.products.find(p => p.name === item.name);
+                if (prod && prod.price) {
+                    const bruto = Number(prod.price) * item.qty;
+                    // Restar el dto. de la línea para que cuadre con el resumen del evento y el PDF
+                    totalIngresos += bruto - (bruto * ((item.discount || 0) / 100));
+                }
+            });
+        });
+    });
+    const pctGlobal = totalInscritos > 0 ? ((totalAsistieron / totalInscritos) * 100).toFixed(1) : '0';
+    const pctCompra = totalAsistieron > 0 ? ((totalCompraron / totalAsistieron) * 100).toFixed(1) : '0';
+
+    let html = `
+        <div class="pr-header">
+            <h1>GESTOR DE EVENTOS — Reporte</h1>
+            <p>Generado el ${new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+        </div>
+
+        <div class="pr-section-title">Resumen Global</div>
+        <div class="pr-stats-grid">
+            <div class="pr-stat-box">
+                <div class="pr-stat-label">Eventos activos</div>
+                <div class="pr-stat-value">${statsEvents.length}</div>
+            </div>
+            <div class="pr-stat-box">
+                <div class="pr-stat-label">Personas inscritas</div>
+                <div class="pr-stat-value">${totalInscritos}</div>
+            </div>
+            <div class="pr-stat-box">
+                <div class="pr-stat-label">Total asistencias</div>
+                <div class="pr-stat-value">${totalAsistieron}</div>
+            </div>
+            <div class="pr-stat-box">
+                <div class="pr-stat-label">Tasa de asistencia</div>
+                <div class="pr-stat-value">${pctGlobal}%</div>
+            </div>
+            <div class="pr-stat-box">
+                <div class="pr-stat-label">Tasa de compra</div>
+                <div class="pr-stat-value">${pctCompra}%</div>
+            </div>
+            <div class="pr-stat-box">
+                <div class="pr-stat-label">Ingresos estimados</div>
+                <div class="pr-stat-value">€${totalIngresos.toFixed(2)}</div>
+            </div>
+        </div>
+
+        <div class="pr-section-title">Comparativa de Eventos</div>
+        <table class="pr-table">
+            <thead><tr>
+                <th>Evento</th><th>Fecha</th><th>Inscritos</th><th>Asistencia</th><th>Estado</th>
+            </tr></thead>
+            <tbody>`;
+
+    statsEvents.forEach(ev => {
+        const total = ev.attendees.length;
+        const att = ev.attendees.filter(a => a.attended).length;
+        const pct = total > 0 ? Math.round((att / total) * 100) : 0;
+        const status = ev.closed ? 'Finalizado' : 'En Curso';
+        html += `<tr>
+            <td><strong>${esc(ev.name)}</strong></td>
+            <td>${formatDate(ev.date)}</td>
+            <td>${total}</td>
+            <td>${att} (${pct}%)</td>
+            <td>${status}</td>
+        </tr>`;
+    });
+    html += `</tbody></table>`;
+
+    // Per-event detail
+    if (statsEvents.some(ev => ev.attendees.length > 0)) {
+        html += `<div class="pr-section-title">Detalle por Evento</div>`;
+        statsEvents.forEach(ev => {
+            if (ev.attendees.length === 0) return;
+            html += `<div class="pr-event-block">
+                <div class="pr-event-name">${esc(ev.name)}</div>
+                <div class="pr-event-meta">${formatDate(ev.date)}${ev.time ? ' · ' + ev.time : ''} · ${ev.attendees.length} inscritos</div>
+                <table class="pr-table">
+                    <thead><tr>
+                        <th>Nombre</th><th>Teléfono</th><th>Asistencia</th><th>Productos</th>
+                    </tr></thead>
+                    <tbody>`;
+            ev.attendees.forEach(att => {
+                const status = att.attended === true
+                    ? '<span class="pr-att-yes">Asistió</span>'
+                    : att.attended === false
+                        ? '<span class="pr-att-no">No asistió</span>'
+                        : '<span class="pr-att-pend">Pendiente</span>';
+                const prods = getProductItems(att.products).map(p => p.name + (p.qty > 1 ? ' ×' + p.qty : '')).join(', ') || '—';
+                html += `<tr>
+                    <td>${esc(att.name)}</td>
+                    <td>${att.phone ? esc(att.phone) : '—'}</td>
+                    <td>${status}</td>
+                    <td>${esc(prods)}</td>
+                </tr>`;
+            });
+            html += `</tbody></table></div>`;
+        });
+    }
+
+    // Products catalogue
+    if (appData.products.length > 0) {
+        html += `<div class="pr-section-title">Catálogo de Productos</div>
+        <table class="pr-table">
+            <thead><tr><th>Producto</th><th>CN</th><th>Precio</th></tr></thead>
+            <tbody>`;
+        appData.products.forEach(p => {
+            html += `<tr>
+                <td>${esc(p.name)}</td>
+                <td>${p.cn ? esc(p.cn) : '—'}</td>
+                <td>${p.price ? '€ ' + Number(p.price).toFixed(2) : '—'}</td>
+            </tr>`;
+        });
+        html += `</tbody></table>`;
+    }
+
+    html += `<div class="pr-footer">GESTOR DE EVENTOS · Reporte generado el ${new Date().toLocaleDateString('es-ES')}</div>`;
+
+    document.getElementById('print-report').innerHTML = html;
+    window.print();
+}
+
+// ---- UTILS ----
+function esc(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+function formatDate(dateStr) {
+    if (!dateStr) return '';
+    const [y, m, d] = dateStr.split('-');
+    return `${d}/${m}/${y}`;
+}
+function formatDateLong(dateStr) {
+    if (!dateStr) return '';
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const [y, m, d] = dateStr.split('-');
+    return `${months[parseInt(m)-1]} ${parseInt(d)}, ${y}`;
+}
+
+// ---- INIT ----
+refreshEvents();
+refreshProducts();
+</script>
+
+<!-- Reporte para impresión / exportar PDF -->
+<div id="print-report"></div>
+
+</body>
+</html>
